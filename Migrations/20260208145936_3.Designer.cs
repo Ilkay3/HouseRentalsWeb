@@ -4,6 +4,7 @@ using HouseRentals.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseRentals.Migrations
 {
     [DbContext(typeof(HouseRentalsDbContext))]
-    partial class HouseRentalsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260208145936_3")]
+    partial class _3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,10 +136,6 @@ namespace HouseRentals.Migrations
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("VarChar(50)");
-
-                    b.Property<bool>("Available")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("available");
 
                     b.Property<int?>("CityId")
                         .HasColumnType("int");

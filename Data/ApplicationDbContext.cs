@@ -9,6 +9,7 @@ namespace HouseRentals.Data
         public DbSet<Amenity> Amenities { get; set; }
         public DbSet<Owner> Owners { get; set; }
         public DbSet<House> Houses { get; set; }
+        public DbSet<City> Cities { get; set; }
         public DbSet<HouseAmenities> House_Amenities { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
 

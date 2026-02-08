@@ -4,6 +4,7 @@ using HouseRentals.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseRentals.Migrations
 {
     [DbContext(typeof(HouseRentalsDbContext))]
-    partial class HouseRentalsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260208145800_2")]
+    partial class _2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,23 +108,6 @@ namespace HouseRentals.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("HouseRentals.Models.City", b =>
-                {
-                    b.Property<int>("CityId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CityId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("VarChar(50)");
-
-                    b.HasKey("CityId");
-
-                    b.ToTable("Cities");
-                });
-
             modelBuilder.Entity("HouseRentals.Models.House", b =>
                 {
                     b.Property<int>("HouseId")
@@ -134,13 +120,6 @@ namespace HouseRentals.Migrations
                         .IsRequired()
                         .HasColumnType("VarChar(50)");
 
-                    b.Property<bool>("Available")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("available");
-
-                    b.Property<int?>("CityId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("VarChar(50)");
@@ -152,8 +131,6 @@ namespace HouseRentals.Migrations
                         .HasColumnType("DOUBLE");
 
                     b.HasKey("HouseId");
-
-                    b.HasIndex("CityId");
 
                     b.HasIndex("OwnerId");
 
@@ -379,10 +356,6 @@ namespace HouseRentals.Migrations
 
             modelBuilder.Entity("HouseRentals.Models.House", b =>
                 {
-                    b.HasOne("HouseRentals.Models.City", null)
-                        .WithMany("Houses")
-                        .HasForeignKey("CityId");
-
                     b.HasOne("HouseRentals.Models.Owner", "Owner")
                         .WithMany("Houses")
                         .HasForeignKey("OwnerId")
@@ -465,11 +438,6 @@ namespace HouseRentals.Migrations
             modelBuilder.Entity("HouseRentals.Models.Amenity", b =>
                 {
                     b.Navigation("HouseAmenities");
-                });
-
-            modelBuilder.Entity("HouseRentals.Models.City", b =>
-                {
-                    b.Navigation("Houses");
                 });
 
             modelBuilder.Entity("HouseRentals.Models.Owner", b =>
