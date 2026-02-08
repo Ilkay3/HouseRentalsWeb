@@ -5,23 +5,22 @@ namespace HouseRentals.Models
 {
     public class House
     {
-        [Key]
-        [Column("house_id")]
         public int HouseId { get; set; }
 
-        [Column("address")]
-        public string Address { get; set; } = null!;
+        [Column(TypeName = "VarChar(50)")]
+        [Required]
+        public string Address { get; set; } = string.Empty;
 
-        [Column("price_per_month")]
-        public int PricePerMonth { get; set; }
+        [Required]
+        [Column(TypeName = "VarChar(50)")]
+        public string Description { get; set; } = string.Empty;
 
-        [Column("owner_id")]
+        [Column(TypeName = "DOUBLE")]
+        public double Price_Per_Month { get; set; }
+
         public int OwnerId { get; set; }
-
         public Owner Owner { get; set; } = null!;
 
-        public ICollection<HouseAmenities> HouseAmenities { get; set; }
-            = new List<HouseAmenities>();
     }
 
 }

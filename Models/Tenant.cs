@@ -5,28 +5,26 @@ namespace HouseRentals.Models
 {
     public class Tenant
     {
-        [Key]
-        [Column("tenant_id")]
         public int TenantId { get; set; }
 
-        [Column("first_name")]
-        [MaxLength(50)]
-        public string FirstName { get; set; } = null!;
+        [Column(TypeName = "VarChar(50)")]
+        [Required]
+        public string First_Name { get; set; } = string.Empty;
 
-        [Column("last_name")]
-        [MaxLength(50)]
-        public string LastName { get; set; } = null!;
+        [Column(TypeName = "VarChar(50)")]
+        [Required]
+        public string Last_Name { get; set; } = string.Empty;
 
-        [Column("phone_number")]
-        [MaxLength(50)]
-        public string PhoneNumber { get; set; } = null!;
+        [Column(TypeName = "VarChar(10)")]
+        [Required]
+        public string EGN { get; set; } = string.Empty;
 
-        [Column("email")]
-        [MaxLength(50)]
-        public string Email { get; set; } = null!;
+        [Column(TypeName = "VarChar(50)")]
+        [Required]
+        public string PhoneNumber { get; set; } = string.Empty;
 
-        [Column("EGN")]
-        [MaxLength(50)]
-        public string EGN { get; set; } = null!;
+        [Column(TypeName = "VarChar(50)")]
+        [Required]
+        public string Email { get; set; } = string.Empty;
     }
 }
