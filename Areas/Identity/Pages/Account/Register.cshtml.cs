@@ -124,6 +124,23 @@ namespace HouseRentals.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
+                    if (Input.UserRole != "Owner" && Input.UserRole != "Tenant")
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid role selected.");
+                        return Page();
+                    }
+
+                    var roleResult = await _userManager.AddToRoleAsync(user, Input.UserRole);
+
+                    if (!roleResult.Succeeded)
+                    {
+                        foreach (var error in roleResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        return Page();
+                    }
+
                     _logger.LogInformation("User created a new account with password.");
 
                     var userId = await _userManager.GetUserIdAsync(user);
