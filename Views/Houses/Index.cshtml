@@ -6,9 +6,12 @@
 
 <h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+@if (User.IsInRole("Owner"))
+{
+        <p>
+            <a asp-action="Create">Create New</a>
+        </p>
+}
 <table class="table">
     <thead>
         <tr>
@@ -48,11 +51,27 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Owner.EGN)
             </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.HouseId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.HouseId">Details</a> |
+    <td>
+        <a asp-action="Details" asp-route-id="@item.HouseId">Details</a>
+
+                    @if (User.IsInRole("Owner"))
+                    {
+                        <text> | </text>
+                <a asp-action="Edit" asp-route-id="@item.HouseId">Edit</a>
+                        <text> | </text>
                 <a asp-action="Delete" asp-route-id="@item.HouseId">Delete</a>
-            </td>
+                    }
+
+                    @if (User.IsInRole("Tenant") && item.Available)
+                    {
+                <form asp-action="Rent" method="post" style="display:inline">
+                    <input type="hidden" name="id" value="@item.HouseId" />
+                    <button type="submit" class="btn btn-success btn-sm">
+                        Наеми
+                    </button>
+                </form>
+                    }
+    </td>
         </tr>
 }
     </tbody>

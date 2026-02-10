@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using HouseRentals.Data;
 using HouseRentals.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace HouseRentals.Controllers
 {
@@ -27,6 +29,27 @@ namespace HouseRentals.Controllers
             var houseRentalsDbContext = _context.Houses.Include(h => h.Owner);
             return View(await houseRentalsDbContext.ToListAsync());
         }
+
+        //Rent
+        [Authorize(Roles = "Tenant")]
+        [HttpPost]
+        public async Task<IActionResult> Rent(int id)
+        {
+            var house = await _context.Houses.FindAsync(id);
+
+            if (house == null)
+                return NotFound();
+
+            if (!house.Available)
+                return BadRequest("Къщата вече е заета");
+
+            house.Available = false;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
 
         // GET: Houses/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -51,7 +74,6 @@ namespace HouseRentals.Controllers
         [Authorize(Roles = "Owner")]
         public IActionResult Create()
         {
-            ViewData["OwnerId"] = new SelectList(_context.Owners, "OwnerId", "EGN");
             return View();
         }
 
@@ -68,7 +90,6 @@ namespace HouseRentals.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["OwnerId"] = new SelectList(_context.Owners, "OwnerId", "EGN", house.OwnerId);
             return View(house);
         }
 
@@ -86,7 +107,6 @@ namespace HouseRentals.Controllers
             {
                 return NotFound();
             }
-            ViewData["OwnerId"] = new SelectList(_context.Owners, "OwnerId", "EGN", house.OwnerId);
             return View(house);
         }
 
@@ -122,7 +142,6 @@ namespace HouseRentals.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["OwnerId"] = new SelectList(_context.Owners, "OwnerId", "EGN", house.OwnerId);
             return View(house);
         }
 
