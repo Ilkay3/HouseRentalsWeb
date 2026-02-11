@@ -27,7 +27,6 @@ namespace HouseRentals.Models
         [Required]
         public string Email { get; set; } = string.Empty;
 
-        // 🔥 ТОВА ЛИПСВА
         public string ApplicationUserId { get; set; } = string.Empty;
 
         [ForeignKey("ApplicationUserId")]

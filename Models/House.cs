@@ -22,7 +22,7 @@ namespace HouseRentals.Models
         public bool Available { get; set; } = true;
 
         public int OwnerId { get; set; }
-        public Owner Owner { get; set; } = null!;
+        public Owner? Owner { get; set; } = null!;
 
     }
 

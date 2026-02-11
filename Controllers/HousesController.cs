@@ -10,7 +10,6 @@ using HouseRentals.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
-
 namespace HouseRentals.Controllers
 {
     [Authorize]
@@ -33,7 +32,7 @@ namespace HouseRentals.Controllers
         }
 
         //Rent
-        [Authorize(Roles = "Tenant")]
+        [Authorize(Roles = "Tenant,Administrator")]
         [HttpPost]
         public async Task<IActionResult> Rent(int id)
         {
@@ -73,7 +72,7 @@ namespace HouseRentals.Controllers
         }
 
         // GET: Houses/Create
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner,Administrator")]
         public IActionResult Create()
         {
             return View();
@@ -84,7 +83,7 @@ namespace HouseRentals.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner,Administrator")]
         public async Task<IActionResult> Create(
             [Bind("Address,Description,Price_Per_Month")] House house)
         {
@@ -108,12 +107,19 @@ namespace HouseRentals.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
+            else if(!ModelState.IsValid)
+            {
+                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        Console.WriteLine(error.ErrorMessage);
+                    }
+            }
 
             return View(house);
         }
 
         // GET: Houses/Edit/5
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner,Administrator")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -134,38 +140,33 @@ namespace HouseRentals.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("HouseId,Address,Description,Price_Per_Month,Available,OwnerId")] House house)
+        [Authorize(Roles = "Owner,Administrator")]
+        public async Task<IActionResult> Edit(int id,
+            [Bind("HouseId,Address,Description,Price_Per_Month,Available")] House house)
         {
             if (id != house.HouseId)
-            {
                 return NotFound();
-            }
+
+            var existingHouse = await _context.Houses.AsNoTracking()
+                .FirstOrDefaultAsync(h => h.HouseId == id);
+
+            if (existingHouse == null)
+                return NotFound();
+
+            house.OwnerId = existingHouse.OwnerId;
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(house);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!HouseExists(house.HouseId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                _context.Update(house);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(house);
         }
 
         // GET: Houses/Delete/5
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner,Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)

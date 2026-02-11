@@ -26,15 +26,5 @@ namespace HouseRentals.Data
             modelBuilder.Entity<HouseAmenities>()
                 .HasKey(ha => new { ha.HouseId, ha.AmenityId });
         }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseMySql(
-                    "Server=localhost;Database=House_Rentals_Web;User=root;Password=21012007;",
-                    new MySqlServerVersion(new Version(8, 0, 41)));
-            }
-        }
     }
 }
