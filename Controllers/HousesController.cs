@@ -17,10 +17,12 @@ namespace HouseRentals.Controllers
     public class HousesController : Controller
     {
         private readonly HouseRentalsDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HousesController(HouseRentalsDbContext context)
+        public HousesController(HouseRentalsDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Houses
@@ -82,14 +84,31 @@ namespace HouseRentals.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("HouseId,Address,Description,Price_Per_Month,Available,OwnerId")] House house)
+        [Authorize(Roles = "Owner")]
+        public async Task<IActionResult> Create(
+            [Bind("Address,Description,Price_Per_Month")] House house)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(house);
+                var userId = _userManager.GetUserId(User);
+
+                var owner = await _context.Owners
+                    .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
+
+                if (owner == null)
+                {
+                    return Content("Owner not found");
+                }
+
+                house.OwnerId = owner.OwnerId;
+                house.Available = true;
+
+                _context.Houses.Add(house);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(house);
         }
 

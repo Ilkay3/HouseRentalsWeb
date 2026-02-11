@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using HouseRentals.Data;
 
 namespace HouseRentals.Areas.Identity.Pages.Account
 {
@@ -30,12 +32,15 @@ namespace HouseRentals.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly HouseRentalsDbContext _context;
+
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
+            HouseRentalsDbContext context,
             IEmailSender emailSender)
         {
             _userManager = userManager;
@@ -44,6 +49,7 @@ namespace HouseRentals.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         /// <summary>
@@ -131,6 +137,39 @@ namespace HouseRentals.Areas.Identity.Pages.Account
                     }
 
                     var roleResult = await _userManager.AddToRoleAsync(user, Input.UserRole);
+                    
+                    if (Input.UserRole == "Owner")
+                    {
+                        var owner = new Owner
+                        {
+                            ApplicationUserId = user.Id,
+                            First_Name = "Temp",
+                            Last_Name = "Temp",
+                            PhoneNumber = "0000000000",
+                            Email = user.Email,
+                            EGN = "0000000000"
+                        };
+
+                        _context.Owners.Add(owner);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    if (Input.UserRole == "Tenant")
+                    {
+                        var tenant = new Tenant
+                        {
+                            ApplicationUserId = user.Id,
+                            First_Name = "Temp",
+                            Last_Name = "Temp",
+                            PhoneNumber = "0000000000",
+                            Email = user.Email,
+                            EGN = "0000000000"
+                        };
+
+                        _context.Tenants.Add(tenant);
+                        await _context.SaveChangesAsync();
+                    }
+
 
                     if (!roleResult.Succeeded)
                     {

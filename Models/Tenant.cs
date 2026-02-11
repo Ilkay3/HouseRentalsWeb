@@ -26,5 +26,12 @@ namespace HouseRentals.Models
         [Column(TypeName = "VarChar(50)")]
         [Required]
         public string Email { get; set; } = string.Empty;
+
+        // 🔥 ТОВА ЛИПСВА
+        public string ApplicationUserId { get; set; } = string.Empty;
+
+        [ForeignKey("ApplicationUserId")]
+        public ApplicationUser ApplicationUser { get; set; }
     }
+
 }
