@@ -1,51 +1,210 @@
 ﻿@model HouseRentals.Models.House
+@using Microsoft.AspNetCore.Identity
+@using HouseRentals.Models
+@inject UserManager<ApplicationUser> UserManager
+@inject HouseRentals.Data.HouseRentalsDbContext Context
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Delete House";
+    var isAdmin = User.IsInRole("Administrator");
+    var isOwner = User.IsInRole("Owner");
+    var userId = UserManager.GetUserId(User);
+
+    var currentOwner = Context.Owners.FirstOrDefault(o => o.ApplicationUserId == userId);
+    var isOwnerOfHouse = currentOwner != null && currentOwner.OwnerId == Model.OwnerId;
+
+    var tenant = Model.TenantId != null ?
+        Context.Tenants.FirstOrDefault(t => t.TenantId == Model.TenantId) : null;
 }
 
-<h1>Delete</h1>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> @ViewData["Title"]
+                    </h2>
+                </div>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>House</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Address)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Address)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price_Per_Month)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price_Per_Month)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Available)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Available)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Owner)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Owner.First_Name)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="HouseId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+                <div class="card-body">
+                    @if (isAdmin)
+                    {
+                            <div class="alert alert-warning">
+                                <strong>
+                                    <i class="bi bi-shield-lock"></i> 
+                                    Вие сте администратор!
+                                </strong> 
+                                Можете да изтриете ВСЯКА обява, независимо от собственика.
+                            </div>
+                    }
+                    else if (isOwner && isOwnerOfHouse)
+                    {
+                            <div class="alert alert-info">
+                                <strong>
+                                    <i class="bi bi-house"></i> 
+                                    Изтривате Ваша обява!
+                                </strong> 
+                                Това действие е необратимо.
+                            </div>
+                    }
+                    else if (isOwner && !isOwnerOfHouse)
+                    {
+                            <div class="alert alert-danger">
+                                <strong>
+                                    <i class="bi bi-shield-exclamation"></i> 
+                                    Нямате права!
+                                </strong> 
+                                Можете да изтривате само собствените си обяви.
+                                <hr />
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Обратно към списъка
+                                </a>
+                            </div>
+                    }
+
+                    <h3 class="text-danger mb-4">
+                        <i class="bi bi-question-circle"></i> 
+                        Сигурни ли сте, че искате да изтриете тази обява?
+                    </h3>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="ps-0">@Html.DisplayNameFor(model => model.Address):</th>
+                                    <td><strong>@Html.DisplayFor(model => model.Address)</strong></td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">@Html.DisplayNameFor(model => model.Description):</th>
+                                    <td>@Html.DisplayFor(model => model.Description)</td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">@Html.DisplayNameFor(model => model.Price_Per_Month):</th>
+                                    <td><span class="badge bg-success fs-6">@Model.Price_Per_Month.ToString("C")</span></td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">@Html.DisplayNameFor(model => model.Available):</th>
+                                    <td>
+                                        @if (Model.Available)
+                                        {
+                                                <span class="badge bg-success">Свободна</span>
+                                        }
+                                        else
+                                        {
+                                                <span class="badge bg-warning text-dark">Заета</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">Собственик:</th>
+                                    <td>
+                                        @Model.Owner.First_Name @Model.Owner.Last_Name
+                                        <br />
+                                        <small class="text-muted">@Model.Owner.Email</small>
+                                    </td>
+                                </tr>
+                                @if (tenant != null)
+                                {
+                                        <tr>
+                                            <th class="ps-0">Наемател:</th>
+                                            <td>
+                                            @tenant.First_Name @tenant.Last_Name
+                                                <br />
+                                                <small class="text-muted">@tenant.Email</small>
+                                            </td>
+                                        </tr>
+                                }
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">
+                                        <i class="bi bi-exclamation-circle"></i> 
+                                        Внимание!
+                                    </h5>
+                                    <p class="card-text">
+                                        При изтриване на тази обява:
+                                        <ul>
+                                            <li>Информацията ще бъде загубена завинаги</li>
+                                            @if (!Model.Available)
+                                            {
+                                                    <li>Наемателят ще загуби достъп до имота</li>
+                                            }
+                                            <li>Действието е НЕОБРАТИМО</li>
+                                        </ul>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    @if ((isOwner && isOwnerOfHouse) || isAdmin)
+                    {
+                            <form asp-action="Delete" method="post" class="d-inline">
+                                <input type="hidden" asp-for="HouseId" />
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="bi bi-trash"></i> Да, изтрий обявата
+                                </button>
+                            </form>
+                    }
+                    <a asp-action="Index" class="btn btn-secondary btn-lg ms-2">
+                        <i class="bi bi-x-circle"></i> Отказ
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (isAdmin)
+        {
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-info-circle"></i> 
+                                Администраторски панел
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                <strong>House ID:</strong> @Model.HouseId<br />
+                                <strong>Owner ID:</strong> @Model.OwnerId<br />
+                            @if (Model.TenantId != null)
+                            {
+                                        <strong>Tenant ID:</strong> @Model.TenantId
+
+                                <br />
+                            }
+                                <strong>Създадена на:</strong> (добавете поле за дата)
+                            </p>
+                            <hr />
+                            <div class="d-grid gap-2">
+                                <a asp-action="Edit" asp-route-id="@Model.HouseId" 
+                                   class="btn btn-warning">
+                                    <i class="bi bi-pencil"></i> Редактирай
+                                </a>
+                                <a asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="bi bi-list"></i> Всички обяви
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    @if (!((isOwner && isOwnerOfHouse) || isAdmin))
+    {
+                <script>
+                    // Пренасочване след 5 секунди, ако няма права
+                    setTimeout(function() {
+                        window.location.href = '@Url.Action("Index")';
+                    }, 5000);
+                </script>
+    }
+}

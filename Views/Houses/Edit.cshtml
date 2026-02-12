@@ -1,49 +1,316 @@
 ﻿@model HouseRentals.Models.House
+@using Microsoft.AspNetCore.Identity
+@using HouseRentals.Models
+@using Microsoft.EntityFrameworkCore;
+@inject UserManager<ApplicationUser> UserManager
+@inject HouseRentals.Data.HouseRentalsDbContext Context
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit House";
+    var isAdmin = User.IsInRole("Administrator");
+    var isOwner = User.IsInRole("Owner");
+    var userId = UserManager.GetUserId(User);
+    
+    var currentOwner = Context.Owners.FirstOrDefault(o => o.ApplicationUserId == userId);
+    var isOwnerOfHouse = currentOwner != null && currentOwner.OwnerId == Model.OwnerId;
+    
+    var canEdit = isAdmin || isOwnerOfHouse;
+    
+    var tenant = Model.TenantId != null ? 
+        Context.Tenants.FirstOrDefault(t => t.TenantId == Model.TenantId) : null;
+    
+    // За падащи менюта
+    var cities = Context.Cities.ToList();
+    var owners = Context.Owners.Include(o => o.ApplicationUser).ToList();
 }
 
-<h1>Edit</h1>
-
-<h4>House</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="HouseId" />
-            <div class="form-group">
-                <label asp-for="Address" class="control-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Price_Per_Month" class="control-label"></label>
-                <input asp-for="Price_Per_Month" class="form-control" />
-                <span asp-validation-for="Price_Per_Month" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Available" /> @Html.DisplayNameFor(model => model.Available)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+@if (!canEdit)
+{
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">
+            <i class="bi bi-shield-exclamation"></i> Нямате права!
+        </h4>
+        <p>Можете да редактирате само собствените си обяви.</p>
+        <hr />
+        <a asp-action="Index" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Обратно към списъка
+        </a>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header @(isAdmin ? "bg-warning" : "bg-primary") text-white">
+                        <h2 class="mb-0">
+                            <i class="bi bi-pencil-square"></i> @ViewData["Title"]
+                            @if (isAdmin)
+                            {
+                                <span class="badge bg-dark ms-2">Администратор режим</span>
+                            }
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body">
+                        @if (!Model.Available && tenant != null)
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Внимание!</strong> Този имот в момента е нает от 
+                                <strong>@tenant.First_Name @tenant.Last_Name</strong>.
+                                Промяната на статус или детайли ще се отрази на текущия наем.
+                            </div>
+                        }
+                        
+                        <form asp-action="Edit" method="post">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                            <input type="hidden" asp-for="HouseId" />
+                            
+                            @if (isAdmin)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-dark text-white">
+                                        <i class="bi bi-shield-lock"></i> Администраторски настройки
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="control-label fw-bold">Собственик</label>
+                                                        <select name="newOwnerId" class="form-select">
+                                                        @foreach (var owner in owners)
+                                                        {
+                                                            if (owner.OwnerId == Model.OwnerId)
+                                                            {
+                                                                <option value="@owner.OwnerId" selected="selected">
+                                                                    @owner.First_Name @owner.Last_Name (@owner.Email)
+                                                                </option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="@owner.OwnerId">
+                                                                    @owner.First_Name @owner.Last_Name (@owner.Email)
+                                                                </option>
+                                                            }
+                                                        }
+                                                        </select>
+                                                    <span class="text-muted">* Смяна на собственика</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="control-label fw-bold">Град</label>
+                                                    <select asp-for="CityId" class="form-select" asp-items="@(new SelectList(cities, "CityId", "Name"))">
+                                                        <option value="">-- Избери град --</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Address" class="control-label fw-bold"></label>
+                                        <input asp-for="Address" class="form-control" placeholder="ул. Централна 15" />
+                                        <span asp-validation-for="Address" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Price_Per_Month" class="control-label fw-bold"></label>
+                                        <div class="input-group">
+                                            <input asp-for="Price_Per_Month" class="form-control" placeholder="500" />
+                                            <span class="input-group-text">лв./месец</span>
+                                        </div>
+                                        <span asp-validation-for="Price_Per_Month" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label asp-for="Description" class="control-label fw-bold"></label>
+                                <textarea asp-for="Description" class="form-control" rows="4" 
+                                          placeholder="Детайлно описание на имота..."></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+                            
+                            @if (!isAdmin)
+                            {
+                                <div class="form-group mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" asp-for="Available" />
+                                        <label class="form-check-label fw-bold" asp-for="Available">
+                                            @Html.DisplayNameFor(model => model.Available)
+                                        </label>
+                                        <span class="text-muted d-block">
+                                            <i class="bi bi-info-circle"></i> 
+                                            Ако премахнете отметката, имотът ще стане "Зает"
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <i class="bi bi-toggle-on"></i> Статус на обявата
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                           asp-for="Available" value="true" id="availableTrue" />
+                                                    <label class="form-check-label fw-bold text-success" for="availableTrue">
+                                                        <i class="bi bi-check-circle"></i> Свободна
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                           asp-for="Available" value="false" id="availableFalse" />
+                                                    <label class="form-check-label fw-bold text-danger" for="availableFalse">
+                                                        <i class="bi bi-x-circle"></i> Заета
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                @if (!Model.Available && tenant != null)
+                                                {
+                                                    <span class="badge bg-info">
+                                                        Текущ наемател: @tenant.First_Name @tenant.Last_Name
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @if (!isAdmin && !isOwnerOfHouse)
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Нямате права да редактирате тази обява!
+                                </div>
+                            }
+                            
+                            <div class="form-group mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle"></i> Запази промените
+                                </button>
+                                <a asp-action="Index" class="btn btn-secondary btn-lg ms-2">
+                                    <i class="bi bi-x-circle"></i> Отказ
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle"></i> Информация
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <strong>ID на обява:</strong> #@Model.HouseId<br />
+                            <strong>Собственик:</strong> @Model.Owner?.First_Name @Model.Owner?.Last_Name<br />
+                            @if (Model.CreatedAt != null)
+                            {
+                                <strong>Създадена на:</strong> @Model.CreatedAt?.ToString("dd.MM.yyyy")<br />
+                            }
+                        </p>
+                        
+                        <hr />
+                        
+                        <h6>⚡ Преглед</h6>
+                        <a asp-action="Details" asp-route-id="@Model.HouseId" 
+                           class="btn btn-outline-primary w-100 mb-2">
+                            <i class="bi bi-eye"></i> Виж детайли
+                        </a>
+                        
+                        <a asp-action="Delete" asp-route-id="@Model.HouseId" 
+                           class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i> Изтрий обявата
+                        </a>
+                        
+                        @if (isAdmin)
+                        {
+                            <hr />
+                            <h6>🛠️ Администраторски действия</h6>
+                            <div class="small text-muted">
+                                <strong>Owner ID:</strong> @Model.OwnerId<br />
+                                <strong>Tenant ID:</strong> @(Model.TenantId?.ToString() ?? "Няма")<br />
+                                <strong>City ID:</strong> @(Model.CityId?.ToString() ?? "Не е избран")
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                @if (isAdmin)
+                {
+                    <div class="card shadow mt-3 border-warning">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-shaded"></i> Администраторски режим
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">
+                                Като администратор можете да:
+                                <ul class="mb-0 mt-2">
+                                    <li>Сменяте собственика на имота</li>
+                                    <li>Променяте града</li>
+                                    <li>Управлявате статуса</li>
+                                    <li>Редактирате всички полета</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Потвърждение при промяна на статус за зает имот
+            @if (!Model.Available && tenant != null)
+            {
+                <text>
+                $('#availableTrue').on('change', function() {
+                    if (this.checked) {
+                        var confirmMessage = 'Този имот в момента е нает от @tenant.First_Name @tenant.Last_Name. ' +
+                                           'Сигурни ли сте, че искате да го освободите?';
+                        if (!confirm(confirmMessage)) {
+                            $('#availableFalse').prop('checked', true);
+                        }
+                    }
+                });
+                </text>
+            }
+            
+            // Валидация на цена
+            $('#Price_Per_Month').on('input', function() {
+                var value = parseFloat($(this).val());
+                if (value < 0) {
+                    $(this).val(0);
+                }
+            });
+        });
+    </script>
 }

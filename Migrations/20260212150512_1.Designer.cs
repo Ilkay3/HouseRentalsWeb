@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseRentals.Migrations
 {
     [DbContext(typeof(HouseRentalsDbContext))]
-    [Migration("20260209162557_6")]
-    partial class _6
+    [Migration("20260212150512_1")]
+    partial class _1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -144,9 +144,13 @@ namespace HouseRentals.Migrations
                     b.Property<int?>("CityId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("DATETIME");
+
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("VarChar(50)");
+                        .HasMaxLength(500)
+                        .HasColumnType("VarChar(500)");
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("int");
@@ -154,11 +158,19 @@ namespace HouseRentals.Migrations
                     b.Property<double>("Price_Per_Month")
                         .HasColumnType("DOUBLE");
 
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("DATETIME");
+
                     b.HasKey("HouseId");
 
                     b.HasIndex("CityId");
 
                     b.HasIndex("OwnerId");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Houses");
                 });
@@ -186,6 +198,10 @@ namespace HouseRentals.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OwnerId"));
 
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("EGN")
                         .IsRequired()
                         .HasColumnType("VarChar(10)");
@@ -208,6 +224,8 @@ namespace HouseRentals.Migrations
 
                     b.HasKey("OwnerId");
 
+                    b.HasIndex("ApplicationUserId");
+
                     b.ToTable("Owners");
                 });
 
@@ -218,6 +236,10 @@ namespace HouseRentals.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("TenantId"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("EGN")
                         .IsRequired()
@@ -240,6 +262,8 @@ namespace HouseRentals.Migrations
                         .HasColumnType("VarChar(50)");
 
                     b.HasKey("TenantId");
+
+                    b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Tenants");
                 });
@@ -382,7 +406,7 @@ namespace HouseRentals.Migrations
 
             modelBuilder.Entity("HouseRentals.Models.House", b =>
                 {
-                    b.HasOne("HouseRentals.Models.City", null)
+                    b.HasOne("HouseRentals.Models.City", "City")
                         .WithMany("Houses")
                         .HasForeignKey("CityId");
 
@@ -392,7 +416,15 @@ namespace HouseRentals.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HouseRentals.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("City");
+
                     b.Navigation("Owner");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("HouseRentals.Models.HouseAmenities", b =>
@@ -404,7 +436,7 @@ namespace HouseRentals.Migrations
                         .IsRequired();
 
                     b.HasOne("HouseRentals.Models.House", "House")
-                        .WithMany()
+                        .WithMany("HouseAmenities")
                         .HasForeignKey("HouseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -412,6 +444,28 @@ namespace HouseRentals.Migrations
                     b.Navigation("Amenity");
 
                     b.Navigation("House");
+                });
+
+            modelBuilder.Entity("HouseRentals.Models.Owner", b =>
+                {
+                    b.HasOne("HouseRentals.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
+            modelBuilder.Entity("HouseRentals.Models.Tenant", b =>
+                {
+                    b.HasOne("HouseRentals.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -473,6 +527,11 @@ namespace HouseRentals.Migrations
             modelBuilder.Entity("HouseRentals.Models.City", b =>
                 {
                     b.Navigation("Houses");
+                });
+
+            modelBuilder.Entity("HouseRentals.Models.House", b =>
+                {
+                    b.Navigation("HouseAmenities");
                 });
 
             modelBuilder.Entity("HouseRentals.Models.Owner", b =>

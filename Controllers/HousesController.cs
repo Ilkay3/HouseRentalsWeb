@@ -27,8 +27,30 @@ namespace HouseRentals.Controllers
         // GET: Houses
         public async Task<IActionResult> Index()
         {
-            var houseRentalsDbContext = _context.Houses.Include(h => h.Owner);
-            return View(await houseRentalsDbContext.ToListAsync());
+            var houses = await _context.Houses
+                .Include(h => h.Owner)
+                .Include(h => h.City)
+                .Include(h => h.Tenant)
+                .ToListAsync();
+
+            int? currentTenantId = null;
+
+            if (User.IsInRole("Tenant"))
+            {
+                var userId = _userManager.GetUserId(User);
+
+                var tenant = await _context.Tenants
+                    .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
+
+                if (tenant != null)
+                {
+                    currentTenantId = tenant.TenantId;
+                }
+            }
+
+            ViewBag.CurrentTenantId = currentTenantId;
+
+            return View(houses);
         }
 
         //Rent
@@ -44,13 +66,45 @@ namespace HouseRentals.Controllers
             if (!house.Available)
                 return BadRequest("Къщата вече е заета");
 
+            var userId = _userManager.GetUserId(User);
+
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
+
+            if (tenant == null)
+                return Content("Tenant not found");
+
             house.Available = false;
+            house.TenantId = tenant.TenantId;
 
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }
+        // End Rent
+        [Authorize(Roles = "Tenant,Administrator")]
+        [HttpPost]
+        public async Task<IActionResult> StopRent(int id)
+        {
+            var house = await _context.Houses.FindAsync(id);
+            if (house == null) return NotFound();
 
+            if (!User.IsInRole("Administrator"))
+            {
+                var userId = _userManager.GetUserId(User);
+                var tenant = await _context.Tenants
+                    .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
+
+                if (tenant == null || house.TenantId != tenant.TenantId)
+                    return Forbid();
+            }
+
+            house.Available = true;
+            house.TenantId = null;
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
 
         // GET: Houses/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -73,8 +127,21 @@ namespace HouseRentals.Controllers
 
         // GET: Houses/Create
         [Authorize(Roles = "Owner,Administrator")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            if (User.IsInRole("Administrator"))
+            {
+                var owners = await _context.Owners
+                    .Select(o => new
+                    {
+                        o.OwnerId,
+                        FullName = o.First_Name + " " + o.Last_Name + " (" + o.Email + ")"
+                    })
+                    .ToListAsync();
+
+                ViewBag.OwnerList = new SelectList(owners, "OwnerId", "FullName");
+            }
+
             return View();
         }
 
@@ -84,35 +151,38 @@ namespace HouseRentals.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Owner,Administrator")]
-        public async Task<IActionResult> Create(
-            [Bind("Address,Description,Price_Per_Month")] House house)
+        public async Task<IActionResult> Create(House house, int? selectedOwnerId)
         {
             if (ModelState.IsValid)
             {
                 var userId = _userManager.GetUserId(User);
+                var isAdmin = User.IsInRole("Administrator");
 
-                var owner = await _context.Owners
-                    .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
-
-                if (owner == null)
+                if (isAdmin)
                 {
-                    return Content("Owner not found");
+                    if (selectedOwnerId == null)
+                    {
+                        ModelState.AddModelError("", "Моля, избери собственик!");
+                        return View(house);
+                    }
+                    house.OwnerId = selectedOwnerId.Value;
+                }
+                else
+                {
+                    var owner = await _context.Owners
+                        .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
+
+                    if (owner == null)
+                        return Content("Owner not found");
+
+                    house.OwnerId = owner.OwnerId;
                 }
 
-                house.OwnerId = owner.OwnerId;
                 house.Available = true;
-
                 _context.Houses.Add(house);
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
-            }
-            else if(!ModelState.IsValid)
-            {
-                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                    {
-                        Console.WriteLine(error.ErrorMessage);
-                    }
             }
 
             return View(house);
@@ -123,17 +193,28 @@ namespace HouseRentals.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
+
+            var house = await _context.Houses
+                .FirstOrDefaultAsync(h => h.HouseId == id);
+
+            if (house == null)
+                return NotFound();
+
+            if (User.IsInRole("Owner"))
+            {
+                var userId = _userManager.GetUserId(User);
+
+                var owner = await _context.Owners
+                    .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
+
+                if (owner == null || house.OwnerId != owner.OwnerId)
+                    return Forbid();
             }
 
-            var house = await _context.Houses.FindAsync(id);
-            if (house == null)
-            {
-                return NotFound();
-            }
             return View(house);
         }
+
 
         // POST: Houses/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -141,27 +222,52 @@ namespace HouseRentals.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Owner,Administrator")]
-        public async Task<IActionResult> Edit(int id,
-            [Bind("HouseId,Address,Description,Price_Per_Month,Available")] House house)
+        public async Task<IActionResult> Edit(int id, House house, int? newOwnerId)
         {
             if (id != house.HouseId)
                 return NotFound();
 
-            var existingHouse = await _context.Houses.AsNoTracking()
+            var existingHouse = await _context.Houses
                 .FirstOrDefaultAsync(h => h.HouseId == id);
 
             if (existingHouse == null)
                 return NotFound();
 
-            house.OwnerId = existingHouse.OwnerId;
+            if (User.IsInRole("Owner"))
+            {
+                var userId = _userManager.GetUserId(User);
+                var owner = await _context.Owners
+                    .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
+
+                if (owner == null || existingHouse.OwnerId != owner.OwnerId)
+                    return Forbid();
+            }
 
             if (ModelState.IsValid)
             {
-                _context.Update(house);
+                existingHouse.Address = house.Address;
+                existingHouse.Description = house.Description;
+                existingHouse.Price_Per_Month = house.Price_Per_Month;
+                existingHouse.Available = house.Available;
+
+                if (User.IsInRole("Administrator") && newOwnerId.HasValue)
+                {
+                    existingHouse.OwnerId = newOwnerId.Value;
+                }
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            
+            if (User.IsInRole("Administrator") && newOwnerId.HasValue)
+            {
+                existingHouse.OwnerId = newOwnerId.Value;
+            }
 
+            if (User.IsInRole("Administrator") && house.CityId.HasValue)
+            {
+                existingHouse.CityId = house.CityId;
+            }
             return View(house);
         }
 
@@ -186,6 +292,7 @@ namespace HouseRentals.Controllers
         }
 
         // POST: Houses/Delete/5
+        [Authorize(Roles = "Owner,Administrator")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

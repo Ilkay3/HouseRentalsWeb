@@ -1,48 +1,284 @@
 ﻿@model HouseRentals.Models.House
+@using Microsoft.AspNetCore.Identity
+@using HouseRentals.Models
+@inject UserManager<ApplicationUser> UserManager
+@inject HouseRentals.Data.HouseRentalsDbContext Context
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "House Details";
+    var isAdmin = User.IsInRole("Administrator");
+    var isOwner = User.IsInRole("Owner");
+    var isTenant = User.IsInRole("Tenant");
+    var userId = UserManager.GetUserId(User);
+
+    var currentOwner = Context.Owners.FirstOrDefault(o => o.ApplicationUserId == userId);
+    var isOwnerOfHouse = currentOwner != null && currentOwner.OwnerId == Model.OwnerId;
+
+    var currentTenant = Context.Tenants.FirstOrDefault(t => t.ApplicationUserId == userId);
+    var isTenantOfHouse = currentTenant != null && currentTenant.TenantId == Model.TenantId;
+
+    var tenant = Model.TenantId != null ?
+        Context.Tenants.FirstOrDefault(t => t.TenantId == Model.TenantId) : null;
 }
 
-<h1>Details</h1>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="bi bi-building"></i> @ViewData["Title"]
+                    </h2>
+                    <span class="badge @(Model.Available ? "bg-success" : "bg-warning text-dark") fs-6">
+                        @(Model.Available ? "СВОБОДНА" : "ЗАЕТА")
+                    </span>
+                </div>
 
-<div>
-    <h4>House</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Address)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Address)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price_Per_Month)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price_Per_Month)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Available)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Available)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Owner)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Owner.First_Name)
-        </dd>
-    </dl>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="border-bottom pb-2">📍 Адрес и локация</h4>
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Address):</dt>
+                                <dd class="col-sm-8 fw-bold">@Html.DisplayFor(model => model.Address)</dd>
+
+                                <dt class="col-sm-4">Град:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.CityId != null)
+                                    {
+                                        @Model.City?.Name
+                                    }
+                                    else
+                                    {
+                                            <span class="text-muted">Не е посочен</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h4 class="border-bottom pb-2">💰 Цена и статус</h4>
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Price_Per_Month):</dt>
+                                <dd class="col-sm-8">
+                                    <span class="h4 text-success">@Model.Price_Per_Month.ToString("C")</span>
+                                    <small class="text-muted">/месец</small>
+                                </dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Available):</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Available)
+                                    {
+                                            <span class="badge bg-success">Достъпна за наемане</span>
+                                    }
+                                    else
+                                    {
+                                            <span class="badge bg-secondary">В момента е под наем</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h4 class="border-bottom pb-2">📝 Описание</h4>
+                            <p class="lead">@Html.DisplayFor(model => model.Description)</p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h4 class="border-bottom pb-2">👤 Собственик</h4>
+                            <dl class="row">
+                                <dt class="col-sm-4">Име:</dt>
+                                <dd class="col-sm-8">
+                                    @Model.Owner.First_Name @Model.Owner.Last_Name
+                                </dd>
+                                <dt class="col-sm-4">Телефон:</dt>
+                                <dd class="col-sm-8">
+                                    <a href="tel:@Model.Owner.PhoneNumber">@Model.Owner.PhoneNumber</a>
+                                </dd>
+                                <dt class="col-sm-4">Email:</dt>
+                                <dd class="col-sm-8">
+                                    <a href="mailto:@Model.Owner.Email">@Model.Owner.Email</a>
+                                </dd>
+                            </dl>
+                        </div>
+
+                        @if (!Model.Available && tenant != null)
+                        {
+                                <div class="col-md-6">
+                                    <h4 class="border-bottom pb-2">👥 Наемател</h4>
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Име:</dt>
+                                        <dd class="col-sm-8">
+                                        @tenant.First_Name @tenant.Last_Name
+                                        </dd>
+                                        <dt class="col-sm-4">Телефон:</dt>
+                                        <dd class="col-sm-8">
+                                            <a href="tel:@tenant.PhoneNumber">@tenant.PhoneNumber</a>
+                                        </dd>
+                                        <dt class="col-sm-4">Email:</dt>
+                                        <dd class="col-sm-8">
+                                            <a href="mailto:@tenant.Email">@tenant.Email</a>
+                                        </dd>
+                                    </dl>
+                                </div>
+                        }
+                    </div>
+
+                    @if (Model.HouseAmenities != null && Model.HouseAmenities.Any())
+                    {
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h4 class="border-bottom pb-2">✨ Удобства</h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var ha in Model.HouseAmenities)
+                                    {
+                                                <span class="badge bg-info text-dark p-2">
+                                                    <i class="bi bi-check-circle"></i> @ha.Amenity.Name
+                                                </span>
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            @if (isAdmin || isOwnerOfHouse)
+                            {
+                                    <a asp-action="Edit" asp-route-id="@Model.HouseId" 
+                                       class="btn btn-warning">
+                                        <i class="bi bi-pencil"></i> Редактирай
+                                    </a>
+                            }
+
+                            @if (isAdmin || isOwnerOfHouse)
+                            {
+                                    <a asp-action="Delete" asp-route-id="@Model.HouseId" 
+                                       class="btn btn-danger ms-2">
+                                        <i class="bi bi-trash"></i> Изтрий
+                                    </a>
+                            }
+
+                            @if (isTenant && Model.Available)
+                            {
+                                    <form asp-action="Rent" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@Model.HouseId" />
+                                        <button type="submit" class="btn btn-success ms-2">
+                                            <i class="bi bi-house-check"></i> Наеми
+                                        </button>
+                                    </form>
+                            }
+
+                            @if ((isTenant && isTenantOfHouse) || isAdmin)
+                            {
+                                    <form asp-action="StopRent" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@Model.HouseId" />
+                                        <button type="submit" class="btn btn-secondary ms-2">
+                                            <i class="bi bi-house-x"></i> Освободи
+                                        </button>
+                                    </form>
+                            }
+                        </div>
+
+                        <a asp-action="Index" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left"></i> Обратно към списъка
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Информация
+                    </h5>
+                </div>
+                <div class="card-body">
+<p>
+    <strong>ID на обява:</strong> #@Model.HouseId<br />
+    <strong>Дата на създаване:</strong> 
+                        @if (Model.CreatedAt != null)
+                        {
+                            @Model.CreatedAt.Value.ToString("dd.MM.yyyy")
+                        }
+                        else
+                        {
+            <span class="text-muted">Няма информация</span>
+                        }
+</p>
+                    <hr />
+
+                    <h6>⚡ Бързи действия</h6>
+                    <div class="d-grid gap-2">
+                        @if (isAdmin)
+                        {
+                                <a asp-controller="Admin" asp-action="EditHouse" 
+                                   asp-route-id="@Model.HouseId" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-shield-lock"></i> Админ панел
+                                </a>
+                        }
+
+                        @if (Model.Available && isTenant)
+                        {
+                                <button type="submit" form="rentForm" class="btn btn-sm btn-success">
+                                    <i class="bi bi-hand-index"></i> Кандидатствай за наем
+                                </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @if (isAdmin)
+            {
+                    <div class="card shadow mt-3">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-shaded"></i> Администраторски детайли
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <small class="text-muted">
+                                <strong>Owner ID:</strong> @Model.OwnerId<br />
+                            @if (Model.TenantId != null)
+                            {
+                                        <strong>Tenant ID:</strong> @Model.TenantId
+
+                                <br />
+                            }
+                                <strong>House ID:</strong> @Model.HouseId<br />
+                                <hr />
+                                <span class="text-warning">
+                                    <i class="bi bi-exclamation-triangle"></i> 
+                                    Тази информация е видима само за администратори
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+            }
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.HouseId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+        <script>
+            // Форматиране на цената
+            document.addEventListener('DOMContentLoaded', function() {
+                var priceElement = document.querySelector('.h4.text-success');
+                if (priceElement) {
+                    var price = parseFloat(priceElement.innerText.replace('$', ''));
+                    if (!isNaN(price)) {
+                        priceElement.innerText = price.toFixed(2) + ' лв.';
+                    }
+                }
+            });
+        </script>
+}

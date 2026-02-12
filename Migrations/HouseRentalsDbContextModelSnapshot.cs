@@ -141,9 +141,13 @@ namespace HouseRentals.Migrations
                     b.Property<int?>("CityId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("DATETIME");
+
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("VarChar(50)");
+                        .HasMaxLength(500)
+                        .HasColumnType("VarChar(500)");
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("int");
@@ -151,11 +155,19 @@ namespace HouseRentals.Migrations
                     b.Property<double>("Price_Per_Month")
                         .HasColumnType("DOUBLE");
 
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("DATETIME");
+
                     b.HasKey("HouseId");
 
                     b.HasIndex("CityId");
 
                     b.HasIndex("OwnerId");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Houses");
                 });
@@ -391,7 +403,7 @@ namespace HouseRentals.Migrations
 
             modelBuilder.Entity("HouseRentals.Models.House", b =>
                 {
-                    b.HasOne("HouseRentals.Models.City", null)
+                    b.HasOne("HouseRentals.Models.City", "City")
                         .WithMany("Houses")
                         .HasForeignKey("CityId");
 
@@ -401,7 +413,15 @@ namespace HouseRentals.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HouseRentals.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("City");
+
                     b.Navigation("Owner");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("HouseRentals.Models.HouseAmenities", b =>
@@ -413,7 +433,7 @@ namespace HouseRentals.Migrations
                         .IsRequired();
 
                     b.HasOne("HouseRentals.Models.House", "House")
-                        .WithMany()
+                        .WithMany("HouseAmenities")
                         .HasForeignKey("HouseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -504,6 +524,11 @@ namespace HouseRentals.Migrations
             modelBuilder.Entity("HouseRentals.Models.City", b =>
                 {
                     b.Navigation("Houses");
+                });
+
+            modelBuilder.Entity("HouseRentals.Models.House", b =>
+                {
+                    b.Navigation("HouseAmenities");
                 });
 
             modelBuilder.Entity("HouseRentals.Models.Owner", b =>

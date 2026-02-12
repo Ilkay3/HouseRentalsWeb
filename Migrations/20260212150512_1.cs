@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HouseRentals.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class _1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -85,48 +85,17 @@ namespace HouseRentals.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Owners",
+                name: "Cities",
                 columns: table => new
                 {
-                    OwnerId = table.Column<int>(type: "int", nullable: false)
+                    CityId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    First_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Last_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    PhoneNumber = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Email = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    EGN = table.Column<string>(type: "VarChar(10)", nullable: false)
+                    Name = table.Column<string>(type: "VarChar(50)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Owners", x => x.OwnerId);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "Tenants",
-                columns: table => new
-                {
-                    TenantId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    First_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Last_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    EGN = table.Column<string>(type: "VarChar(10)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    PhoneNumber = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Email = table.Column<string>(type: "VarChar(50)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Tenants", x => x.TenantId);
+                    table.PrimaryKey("PK_Cities", x => x.CityId);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -258,6 +227,68 @@ namespace HouseRentals.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "Owners",
+                columns: table => new
+                {
+                    OwnerId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    First_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Last_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EGN = table.Column<string>(type: "VarChar(10)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    PhoneNumber = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Email = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ApplicationUserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Owners", x => x.OwnerId);
+                    table.ForeignKey(
+                        name: "FK_Owners_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Tenants",
+                columns: table => new
+                {
+                    TenantId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    First_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Last_Name = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EGN = table.Column<string>(type: "VarChar(10)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    PhoneNumber = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Email = table.Column<string>(type: "VarChar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ApplicationUserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tenants", x => x.TenantId);
+                    table.ForeignKey(
+                        name: "FK_Tenants_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Houses",
                 columns: table => new
                 {
@@ -265,20 +296,35 @@ namespace HouseRentals.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Address = table.Column<string>(type: "VarChar(50)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Description = table.Column<string>(type: "VarChar(50)", nullable: false)
+                    Description = table.Column<string>(type: "VarChar(500)", maxLength: 500, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Price_Per_Month = table.Column<double>(type: "DOUBLE", nullable: false),
-                    OwnerId = table.Column<int>(type: "int", nullable: false)
+                    Available = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    OwnerId = table.Column<int>(type: "int", nullable: false),
+                    TenantId = table.Column<int>(type: "int", nullable: true),
+                    CityId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "DATETIME", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "DATETIME", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Houses", x => x.HouseId);
+                    table.ForeignKey(
+                        name: "FK_Houses_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "CityId");
                     table.ForeignKey(
                         name: "FK_Houses_Owners_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "Owners",
                         principalColumn: "OwnerId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Houses_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "TenantId");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -350,9 +396,29 @@ namespace HouseRentals.Migrations
                 column: "AmenityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Houses_CityId",
+                table: "Houses",
+                column: "CityId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Houses_OwnerId",
                 table: "Houses",
                 column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Houses_TenantId",
+                table: "Houses",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Owners_ApplicationUserId",
+                table: "Owners",
+                column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tenants_ApplicationUserId",
+                table: "Tenants",
+                column: "ApplicationUserId");
         }
 
         /// <inheritdoc />
@@ -377,13 +443,7 @@ namespace HouseRentals.Migrations
                 name: "House_Amenities");
 
             migrationBuilder.DropTable(
-                name: "Tenants");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Amenities");
@@ -392,7 +452,16 @@ namespace HouseRentals.Migrations
                 name: "Houses");
 
             migrationBuilder.DropTable(
+                name: "Cities");
+
+            migrationBuilder.DropTable(
                 name: "Owners");
+
+            migrationBuilder.DropTable(
+                name: "Tenants");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
         }
     }
 }

@@ -1,78 +1,333 @@
 ﻿@model IEnumerable<HouseRentals.Models.House>
+@using Microsoft.AspNetCore.Identity
+@using HouseRentals.Models
+@inject UserManager<ApplicationUser> UserManager
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "House Rentals";
+    int? currentTenantId = ViewBag.CurrentTenantId as int?;
+    var isAdmin = User.IsInRole("Administrator");
+    var isOwner = User.IsInRole("Owner");
+    var isTenant = User.IsInRole("Tenant");
 }
 
-<h1>Index</h1>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-6">
+            <i class="bi bi-building"></i> Houses for Rent
+        </h1>
 
-@if (User.IsInRole("Owner") || User.IsInRole("Administrator"))
-{
-        <p>
-            <a asp-action="Create">Create New</a>
-        </p>
+        @if (isOwner || isAdmin)
+        {
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create New House
+                </a>
+        }
+    </div>
+
+    <!-- Stats Cards -->
+    @if (isAdmin)
+    {
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Houses</h5>
+                            <h2 class="card-text">@Model.Count()</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Available</h5>
+                            <h2 class="card-text">@Model.Count(h => h.Available)</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">Rented</h5>
+                            <h2 class="card-text">@Model.Count(h => !h.Available)</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Owners</h5>
+                            <h2 class="card-text">@Model.Select(h => h.OwnerId).Distinct().Count()</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    }
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" id="searchAddress" class="form-control" placeholder="🔍 Search by address...">
+                </div>
+                <div class="col-md-3">
+                    <select id="filterStatus" class="form-select">
+                        <option value="all">All Status</option>
+                        <option value="available">Available</option>
+                        <option value="rented">Rented</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterPrice" class="form-select">
+                        <option value="all">All Prices</option>
+                        <option value="0-500">0 - 500 лв.</option>
+                        <option value="501-1000">501 - 1000 лв.</option>
+                        <option value="1001+">1000+ лв.</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button id="clearFilters" class="btn btn-outline-secondary w-100">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Houses Table -->
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="housesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <i class="bi bi-pin-map"></i> 
+                                @Html.DisplayNameFor(model => model.Address)
+                            </th>
+                            <th>
+                                <i class="bi bi-card-text"></i> 
+                                @Html.DisplayNameFor(model => model.Description)
+                            </th>
+                            <th>
+                                <i class="bi bi-currency-dollar"></i> 
+                                @Html.DisplayNameFor(model => model.Price_Per_Month)
+                            </th>
+                            <th>
+                                <i class="bi bi-toggle-on"></i> 
+                                @Html.DisplayNameFor(model => model.Available)
+                            </th>
+                            <th>
+                                <i class="bi bi-person"></i> 
+                                Owner
+                            </th>
+                            @if (isAdmin)
+                            {
+                                    <th>
+                                        <i class="bi bi-person-badge"></i>
+                                        Tenant
+                                    </th>
+                            }
+                            <th>
+                                <i class="bi bi-gear"></i> 
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                                <tr class="@(!item.Available ? "table-secondary" : "")">
+                                    <td>
+                                        <strong>@Html.DisplayFor(modelItem => item.Address)</strong>
+                                    @if (item.City != null)
+                                    {
+                                                <br />
+                                                <small class="text-muted">@item.City.Name</small>
+                                    }
+                                    </td>
+                                    <td>
+                                    @if (item.Description.Length > 50)
+                                    {
+                                        @(item.Description.Substring(0, 50) + "...")
+                                    }
+                                    else
+                                    {
+                                        @Html.DisplayFor(modelItem => item.Description)
+                                    }
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-success">
+                                        @item.Price_Per_Month.ToString("C")
+                                        </span>
+                                    </td>
+                                    <td>
+                                    @if (item.Available)
+                                    {
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle"></i> Available
+                                                </span>
+                                    }
+                                    else
+                                    {
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-house-lock"></i> Rented
+                                                </span>
+                                    }
+                                    </td>
+                                    <td>
+                                        <span>@item.Owner?.First_Name @item.Owner?.Last_Name</span>
+                                    @if (isAdmin)
+                                    {
+                                                <br />
+                                                <small class="text-muted">@item.Owner?.Email</small>
+                                    }
+                                    </td>
+                                @if (isAdmin)
+                                {
+                                            <td>
+                                        @if (item.Tenant != null)
+                                        {
+                                                        <span>@item.Tenant.First_Name @item.Tenant.Last_Name</span>
+                                                        <br />
+                                                        <small class="text-muted">@item.Tenant.Email</small>
+                                        }
+                                        else
+                                        {
+                                                        <span class="text-muted">No tenant</span>
+                                        }
+                                            </td>
+                                }
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@item.HouseId" 
+                                               class="btn btn-sm btn-info" title="Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                        @if (isOwner || isAdmin)
+                                        {
+                                                    <a asp-action="Edit" asp-route-id="@item.HouseId" 
+                                                       class="btn btn-sm btn-warning" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a asp-action="Delete" asp-route-id="@item.HouseId" 
+                                                       class="btn btn-sm btn-danger" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                        }
+
+                                        @if (isTenant && item.Available)
+                                        {
+                                                    <form asp-action="Rent" method="post" style="display:inline">
+                                                        <input type="hidden" name="id" value="@item.HouseId" />
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Rent">
+                                                            <i class="bi bi-house-check"></i>
+                                                        </button>
+                                                    </form>
+                                        }
+
+                                        @if (isTenant && !item.Available && item.TenantId == currentTenantId)
+                                        {
+                                                    <form asp-action="StopRent" method="post" style="display:inline">
+                                                        <input type="hidden" name="id" value="@item.HouseId" />
+                                                        <button type="submit" class="btn btn-sm btn-warning" title="Stop Rent">
+                                                            <i class="bi bi-house-x"></i>
+                                                        </button>
+                                                    </form>
+                                        }
+
+                                        @if (isAdmin && !item.Available && item.TenantId != null)
+                                        {
+                                                    <form asp-action="StopRent" method="post" style="display:inline">
+                                                        <input type="hidden" name="id" value="@item.HouseId" />
+                                                        <button type="submit" class="btn btn-sm btn-secondary" title="Force Stop Rent">
+                                                            <i class="bi bi-shield-exclamation"></i>
+                                                        </button>
+                                                    </form>
+                                        }
+                                        </div>
+                                    </td>
+                                </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+            <div class="alert alert-info mt-4 text-center">
+                <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+                <h4>No houses found</h4>
+            @if (isOwner || isAdmin)
+            {
+                        <p>
+                            <a asp-action="Create" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle"></i> Create the first house
+                            </a>
+                        </p>
+            }
+            else
+            {
+                        <p class="mb-0">Check back later for available houses!</p>
+            }
+            </div>
+    }
+</div>
+
+@section Scripts {
+        <script>
+            $(document).ready(function() {
+                // Live search by address
+                $("#searchAddress").on("keyup", function() {
+                    var value = $(this).val().toLowerCase();
+                    $("#housesTable tbody tr").filter(function() {
+                        $(this).toggle($(this).find("td:first").text().toLowerCase().indexOf(value) > -1)
+                    });
+                });
+
+                // Filter by status
+                $("#filterStatus").on("change", function() {
+                    var status = $(this).val();
+                    $("#housesTable tbody tr").each(function() {
+                        var isAvailable = $(this).find(".badge").text().includes("Available");
+                        if (status === "all") {
+                            $(this).show();
+                        } else if (status === "available") {
+                            $(this).toggle(isAvailable);
+                        } else if (status === "rented") {
+                            $(this).toggle(!isAvailable);
+                        }
+                    });
+                });
+
+                // Filter by price
+                $("#filterPrice").on("change", function() {
+                    var priceRange = $(this).val();
+                    $("#housesTable tbody tr").each(function() {
+                        var priceText = $(this).find(".text-success").text().replace('C', '').trim();
+                        var price = parseFloat(priceText) || 0;
+
+                        if (priceRange === "all") {
+                            $(this).show();
+                        } else if (priceRange === "0-500") {
+                            $(this).toggle(price <= 500);
+                        } else if (priceRange === "501-1000") {
+                            $(this).toggle(price > 500 && price <= 1000);
+                        } else if (priceRange === "1001+") {
+                            $(this).toggle(price > 1000);
+                        }
+                    });
+                });
+
+                // Clear all filters
+                $("#clearFilters").on("click", function() {
+                    $("#searchAddress").val("");
+                    $("#filterStatus").val("all");
+                    $("#filterPrice").val("all");
+                    $("#housesTable tbody tr").show();
+                });
+            });
+        </script>
 }
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Address)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price_Per_Month)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Available)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Owner.First_Name)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Address)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price_Per_Month)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Available)
-            </td>
-            <td>
-                    @Html.DisplayFor(modelItem => item.Owner.First_Name)
-            </td>
-    <td>
-        <a asp-action="Details" asp-route-id="@item.HouseId">Details</a>
-
-                    @if (User.IsInRole("Owner") || User.IsInRole("Administrator"))
-                    {
-                        <text> | </text>
-                <a asp-action="Edit" asp-route-id="@item.HouseId">Edit</a>
-                        <text> | </text>
-                <a asp-action="Delete" asp-route-id="@item.HouseId">Delete</a>
-                    }
-
-                    @if (User.IsInRole("Tenant") || User.IsInRole("Administrator") && item.Available)
-                    {
-                <form asp-action="Rent" method="post" style="display:inline">
-                    <input type="hidden" name="id" value="@item.HouseId" />
-                    <button type="submit" class="btn btn-success btn-sm">
-                        Rent
-                    </button>
-                </form>
-                    }
-    </td>
-        </tr>
-}
-    </tbody>
-</table>
