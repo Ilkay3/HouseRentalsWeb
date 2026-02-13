@@ -61,6 +61,7 @@ namespace HouseRentals.Models
 
         // Навигационно пропърти за удобства (Amenities)
         public ICollection<HouseAmenities> HouseAmenities { get; set; } = new List<HouseAmenities>();
+        public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
 
         // ✅ Изчисляемо пропърти - пълния адрес (ако има град)
         [NotMapped]

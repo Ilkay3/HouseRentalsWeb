@@ -58,7 +58,9 @@ namespace HouseRentals.Controllers
         [HttpPost]
         public async Task<IActionResult> Rent(int id)
         {
-            var house = await _context.Houses.FindAsync(id);
+            var house = await _context.Houses
+                .Include(h => h.Rentals)
+                .FirstOrDefaultAsync(h => h.HouseId == id);
 
             if (house == null)
                 return NotFound();
@@ -67,18 +69,40 @@ namespace HouseRentals.Controllers
                 return BadRequest("Къщата вече е заета");
 
             var userId = _userManager.GetUserId(User);
-
             var tenant = await _context.Tenants
+                .Include(t => t.Rentals)
                 .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
 
             if (tenant == null)
                 return Content("Tenant not found");
 
+            // ПРОВЕРКА: Дали наемателят вече има активен наем?
+            var activeRental = tenant.Rentals?.FirstOrDefault(r => r.IsActive);
+            if (activeRental != null)
+            {
+                return BadRequest("Вече имате активен наем. Моля, първо освободете текущия имот.");
+            }
+
+            // БИЗНЕС ЛОГИКА: Създаване на нов Rental запис
+            var rental = new Rental
+            {
+                HouseId = house.HouseId,
+                TenantId = tenant.TenantId,
+                RentDate = DateTime.Now,
+                PriceAtRent = house.Price_Per_Month,
+                IsActive = true,
+                Notes = "Наето през уеб сайта"
+            };
+
+            _context.Rentals.Add(rental);
+
+            // Актуализираме статуса на къщата
             house.Available = false;
             house.TenantId = tenant.TenantId;
 
             await _context.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = "Успешно наехте имота!";
             return RedirectToAction(nameof(Index));
         }
         // End Rent
@@ -86,25 +110,87 @@ namespace HouseRentals.Controllers
         [HttpPost]
         public async Task<IActionResult> StopRent(int id)
         {
-            var house = await _context.Houses.FindAsync(id);
-            if (house == null) return NotFound();
+            var house = await _context.Houses
+                .Include(h => h.Rentals)
+                .FirstOrDefaultAsync(h => h.HouseId == id);
 
-            if (!User.IsInRole("Administrator"))
+            if (house == null)
+                return NotFound();
+
+            var userId = _userManager.GetUserId(User);
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
+
+            // Намери активния наем за тази къща
+            var activeRental = house.Rentals?
+                .FirstOrDefault(r => r.IsActive && r.TenantId == (tenant?.TenantId ?? 0));
+
+            if (activeRental == null && !User.IsInRole("Administrator"))
+                return Forbid();
+
+            // АКО Е АДМИН ИЛИ СОБСТВЕНИК - може да освободи без проверка
+            if (User.IsInRole("Administrator") || User.IsInRole("Owner"))
             {
-                var userId = _userManager.GetUserId(User);
-                var tenant = await _context.Tenants
-                    .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
-
-                if (tenant == null || house.TenantId != tenant.TenantId)
-                    return Forbid();
+                activeRental = house.Rentals?.FirstOrDefault(r => r.IsActive);
+                if (activeRental == null)
+                    return BadRequest("Няма активен наем за този имот.");
             }
 
-            house.Available = true;
-            house.TenantId = null;
+            // БИЗНЕС ЛОГИКА: Освобождаване
+            activeRental!.ReleaseDate = DateTime.Now;
+            activeRental.IsActive = false;
+
+            // 2️⃣ Изчисляваме сумата
+            var days = (activeRental.ReleaseDate.Value - activeRental.RentDate).Days;
+            if (days == 0) days = 1;
+
+            double dailyPrice = activeRental.PriceAtRent / 30.0;
+            activeRental.TotalAmount = days * dailyPrice;
+
+            // ⚠ НЕ освобождаваме къщата още!
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            // 3️⃣ Пренасочваме към плащане
+            return RedirectToAction("Pay", new { rentalId = activeRental.RentalId });
         }
+
+        [Authorize(Roles = "Tenant,Administrator")]
+        public async Task<IActionResult> Pay(int rentalId)
+        {
+            var rental = await _context.Rentals
+                .Include(r => r.House)
+                .FirstOrDefaultAsync(r => r.RentalId == rentalId);
+
+            if (rental == null)
+                return NotFound();
+
+            return View(rental);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Tenant,Administrator")]
+        public async Task<IActionResult> ConfirmPayment(int rentalId)
+        {
+            var rental = await _context.Rentals
+                .Include(r => r.House)
+                .FirstOrDefaultAsync(r => r.RentalId == rentalId);
+
+            if (rental == null)
+                return NotFound();
+
+            rental.IsPaid = true;
+
+            // 🔓 Сега освобождаваме имота
+            rental.House!.Available = true;
+            rental.House.TenantId = null;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Плащането беше успешно!";
+            return RedirectToAction("Index");
+        }
+
 
         // GET: Houses/Details/5
         public async Task<IActionResult> Details(int? id)

@@ -4,6 +4,7 @@ using HouseRentals.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HouseRentals.Migrations
 {
     [DbContext(typeof(HouseRentalsDbContext))]
-    partial class HouseRentalsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260213173406_2")]
+    partial class _2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,9 +243,6 @@ namespace HouseRentals.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("Notes")
                         .HasColumnType("VarChar(500)");
 
@@ -257,9 +257,6 @@ namespace HouseRentals.Migrations
 
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
-
-                    b.Property<double?>("TotalAmount")
-                        .HasColumnType("DOUBLE");
 
                     b.HasKey("RentalId");
 

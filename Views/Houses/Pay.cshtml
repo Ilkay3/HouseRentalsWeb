@@ -1,0 +1,21 @@
+﻿@model Rental
+
+<h2>Плащане на наем</h2>
+
+<div class="card p-4">
+    <p><strong>Имот:</strong> @Model.House?.Address</p>
+    <p><strong>Наета на:</strong> @Model.RentDate</p>
+    <p><strong>Освободена на:</strong> @Model.ReleaseDate</p>
+    <p><strong>Дължима сума:</strong> 
+        <span class="text-danger fw-bold">
+            @Model.TotalAmount?.ToString("F2") лв.
+        </span>
+    </p>
+
+    <form asp-action="ConfirmPayment" method="post">
+        <input type="hidden" name="rentalId" value="@Model.RentalId" />
+        <button class="btn btn-success">
+            Плати
+        </button>
+    </form>
+</div>

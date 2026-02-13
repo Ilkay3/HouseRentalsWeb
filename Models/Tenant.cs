@@ -31,6 +31,8 @@ namespace HouseRentals.Models
 
         [ForeignKey("ApplicationUserId")]
         public ApplicationUser ApplicationUser { get; set; }
+
+        public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     }
 
 }

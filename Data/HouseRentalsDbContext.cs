@@ -12,6 +12,7 @@ namespace HouseRentals.Data
         public DbSet<City> Cities { get; set; }
         public DbSet<HouseAmenities> House_Amenities { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Rental> Rentals { get; set; }
 
         public HouseRentalsDbContext(
             DbContextOptions<HouseRentalsDbContext> options)
@@ -25,6 +26,29 @@ namespace HouseRentals.Data
 
             modelBuilder.Entity<HouseAmenities>()
                 .HasKey(ha => new { ha.HouseId, ha.AmenityId });
+            
+            // Rental -> House (Many-to-One)
+            modelBuilder.Entity<Rental>()
+                .HasOne(r => r.House)
+                .WithMany(h => h.Rentals)
+                .HasForeignKey(r => r.HouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Rental -> Tenant (Many-to-One)
+            modelBuilder.Entity<Rental>()
+                .HasOne(r => r.Tenant)
+                .WithMany(t => t.Rentals)
+                .HasForeignKey(r => r.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Индекси за бързо търсене
+            modelBuilder.Entity<Rental>()
+                .HasIndex(r => r.IsActive)
+                .HasDatabaseName("IX_Rental_IsActive");
+
+            modelBuilder.Entity<Rental>()
+                .HasIndex(r => new { r.HouseId, r.IsActive })
+                .HasDatabaseName("IX_Rental_House_Active");
         }
     }
 }
