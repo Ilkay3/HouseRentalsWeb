@@ -110,19 +110,56 @@ namespace HouseRentals.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
             var house = await _context.Houses
                 .Include(h => h.Owner)
+                    .ThenInclude(o => o.ApplicationUser)
+                .Include(h => h.Tenant)
+                    .ThenInclude(t => t.ApplicationUser)
+                .Include(h => h.City)
+                .Include(h => h.HouseAmenities)
+                    .ThenInclude(ha => ha.Amenity)
                 .FirstOrDefaultAsync(m => m.HouseId == id);
+
             if (house == null)
-            {
                 return NotFound();
-            }
 
             return View(house);
+        }
+
+        // GET: Houses/MyHouses - само за собственик
+        [Authorize(Roles = "Owner,Administrator")]
+        public async Task<IActionResult> MyHouses()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // Намираме собственика според UserId
+            var owner = await _context.Owners
+                .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
+
+            if (owner == null && !User.IsInRole("Administrator"))
+            {
+                return NotFound("Нямате профил като собственик.");
+            }
+
+            // Ако е администратор, покажи всички обяви (или направи друга логика)
+            if (User.IsInRole("Administrator"))
+            {
+                var allHouses = await _context.Houses
+                    .Include(h => h.Owner)
+                    .Include(h => h.Tenant)
+                    .ToListAsync();
+                return View("MyHouses", allHouses);
+            }
+
+            // Вземаме само обявите на този собственик
+            var houses = await _context.Houses
+                .Where(h => h.OwnerId == owner!.OwnerId)
+                .Include(h => h.Tenant)
+                .ToListAsync();
+
+            return View(houses);
         }
 
         // GET: Houses/Create
@@ -142,8 +179,12 @@ namespace HouseRentals.Controllers
                 ViewBag.OwnerList = new SelectList(owners, "OwnerId", "FullName");
             }
 
+            var cities = await _context.Cities.ToListAsync();
+            ViewBag.CityList = new SelectList(cities, "CityId", "Name");
+
             return View();
         }
+
 
         // POST: Houses/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -179,11 +220,15 @@ namespace HouseRentals.Controllers
                 }
 
                 house.Available = true;
+
                 _context.Houses.Add(house);
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
+
+            // 🔥 Връщаме CityList ако има грешка
+            ViewBag.CityList = new SelectList(await _context.Cities.ToListAsync(), "CityId", "Name", house.CityId);
 
             return View(house);
         }

@@ -1,8 +1,229 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using Microsoft.AspNetCore.Identity
+@using HouseRentals.Models
+@using Microsoft.EntityFrameworkCore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject HouseRentals.Data.HouseRentalsDbContext Context
+
+@{
+    ViewData["Title"] = "Начало";
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isAdmin = User.IsInRole("Administrator");
+    var isOwner = User.IsInRole("Owner");
+    var isTenant = User.IsInRole("Tenant");
+
+    var totalHouses = Context.Houses.Count();
+    var availableHouses = Context.Houses.Count(h => h.Available);
+    var rentedHouses = Context.Houses.Count(h => !h.Available);
+    var totalOwners = Context.Owners.Count();
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-3">
+    <!-- Hero секция -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="p-3 bg-light rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-1 text-primary">
+                            <i class="bi bi-house-heart-fill"></i> HouseRentals
+                        </h1>
+                        <p class="text-muted small mb-0">Намерете своя идеален дом или дайте под наем вашия имот</p>
+                    </div>
+                    @if (!isSignedIn)
+                    {
+                            <div>
+                                <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-person-plus"></i> Регистрация
+                                </a>
+                                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-primary btn-sm">
+                                    Вход
+                                </a>
+                            </div>
+                    }
+                    else
+                    {
+                            <a asp-controller="Houses" asp-action="Index" class="btn btn-primary btn-sm">
+                                <i class="bi bi-building"></i> Обяви
+                            </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ТРИТЕ БУТОНА ЦЕНТРИРАНИ -->
+    <div class="row justify-content-center g-2 mb-3">
+        <div class="col-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <small class="text-uppercase text-muted">Общо обяви</small>
+                    <h3 class="mb-0 fw-bold text-primary">@totalHouses</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <small class="text-uppercase text-muted">Свободни</small>
+                    <h3 class="mb-0 fw-bold text-success">@availableHouses</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <small class="text-uppercase text-muted">Заети</small>
+                    <h3 class="mb-0 fw-bold text-warning">@rentedHouses</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ролево-специфични секции -->
+    @if (isSignedIn)
+    {
+        @if (isAdmin)
+        {
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div class="btn-group w-100" role="group">
+                                <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-people"></i> Потребители
+                                </a>
+                                <a asp-controller="Admin" asp-action="AllHouses" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-building"></i> Обяви
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+        }
+
+        @if (isOwner)
+        {
+            var userId = UserManager.GetUserId(User);
+            var owner = Context.Owners.FirstOrDefault(o => o.ApplicationUserId == userId);
+            var ownerHousesCount = owner != null ? Context.Houses.Count(h => h.OwnerId == owner.OwnerId) : 0;
+            var ownerRentedHouses = owner != null ? Context.Houses.Count(h => h.OwnerId == owner.OwnerId && !h.Available) : 0;
+
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white py-2">
+                                    <small><i class="bi bi-lightning"></i> Бързи действия</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="d-grid gap-1">
+                                        <a asp-controller="Houses" asp-action="Create" class="btn btn-success btn-sm">
+                                            <i class="bi bi-plus-circle"></i> Добави нова обява
+                                        </a>
+                                        <a asp-controller="Houses" asp-action="MyHouses" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-list"></i> Моите обяви
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white py-2">
+                                    <small><i class="bi bi-graph-up"></i> Моята статистика</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <small><strong>Вашите обяви:</strong> @ownerHousesCount</small><br />
+                                    <small><strong>Заети имоти:</strong> @ownerRentedHouses</small><br />
+                                    <small><strong>Свободни имоти:</strong> @(ownerHousesCount - ownerRentedHouses)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        }
+
+        @if (isTenant)
+        {
+            var tenantUserId = UserManager.GetUserId(User);
+            var tenant = Context.Tenants.FirstOrDefault(t => t.ApplicationUserId == tenantUserId);
+            var myRentedHouse = tenant != null ?
+                Context.Houses.FirstOrDefault(h => h.TenantId == tenant.TenantId) : null;
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body py-2">
+                            @if (myRentedHouse != null)
+                            {
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small><i class="bi bi-house-check text-success"></i> <strong>Вашият наем:</strong> @myRentedHouse.Address</small>
+                                                <a asp-controller="Houses" asp-action="Details" asp-route-id="@myRentedHouse.HouseId" 
+                                                   class="btn btn-outline-primary btn-sm">Детайли</a>
+                                            </div>
+                            }
+                            else
+                            {
+                                            <span class="small">Нямате нает имот. <a asp-controller="Houses" asp-action="Index">Разгледайте обявите</a></span>
+                            }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        }
+    }
+    else
+    {
+            <!-- Информация за нерегистрирани потребители -->
+            <div class="row g-2 mt-2">
+                <div class="col-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-2">
+                            <i class="bi bi-house-door text-primary"></i>
+                            <small class="d-block">Намери дом</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-2">
+                            <i class="bi bi-key text-success"></i>
+                            <small class="d-block">Дай под наем</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-2">
+                            <i class="bi bi-shield-check text-info"></i>
+                            <small class="d-block">Сигурно</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    }
+
+    <!-- Последни обяви -->
+    @if (totalHouses > 0)
+    {
+            <h6 class="mt-3 mb-2"><i class="bi bi-clock-history"></i> Последни обяви</h6>
+            <div class="row g-2">
+            @foreach (var house in Context.Houses
+               .Include(h => h.Owner)
+               .OrderByDescending(h => h.HouseId)
+               .Take(2)
+               .ToList())
+            {
+                        <div class="col-6">
+                            <div class="card h-100">
+                                <div class="card-body p-2">
+                                    <div class="small fw-bold text-truncate">@house.Address</div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <span class="badge @(house.Available ? "bg-success" : "bg-secondary")" style="font-size: 0.7rem;">
+                                    @(house.Available ? "Свободна" : "Заета")
+                                        </span>
+                                        <small class="text-primary">@house.Price_Per_Month.ToString("C")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            }
+            </div>
+    }
 </div>

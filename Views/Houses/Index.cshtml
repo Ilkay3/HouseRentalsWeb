@@ -19,49 +19,49 @@
 
         @if (isOwner || isAdmin)
         {
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Create New House
-                </a>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create New House
+                    </a>
         }
     </div>
 
     <!-- Stats Cards -->
     @if (isAdmin)
     {
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Houses</h5>
-                            <h2 class="card-text">@Model.Count()</h2>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Houses</h5>
+                                <h2 class="card-text">@Model.Count()</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h5 class="card-title">Available</h5>
+                                <h2 class="card-text">@Model.Count(h => h.Available)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <h5 class="card-title">Rented</h5>
+                                <h2 class="card-text">@Model.Count(h => !h.Available)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Owners</h5>
+                                <h2 class="card-text">@Model.Select(h => h.OwnerId).Distinct().Count()</h2>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Available</h5>
-                            <h2 class="card-text">@Model.Count(h => h.Available)</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-warning">
-                        <div class="card-body">
-                            <h5 class="card-title">Rented</h5>
-                            <h2 class="card-text">@Model.Count(h => !h.Available)</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-info">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Owners</h5>
-                            <h2 class="card-text">@Model.Select(h => h.OwnerId).Distinct().Count()</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
     }
 
     <!-- Search and Filter -->
@@ -81,9 +81,9 @@
                 <div class="col-md-3">
                     <select id="filterPrice" class="form-select">
                         <option value="all">All Prices</option>
-                        <option value="0-500">0 - 500 лв.</option>
-                        <option value="501-1000">501 - 1000 лв.</option>
-                        <option value="1001+">1000+ лв.</option>
+                        <option value="0-500">0 - 500 euro.</option>
+                        <option value="501-1000">501 - 1000 euro.</option>
+                        <option value="1001+">1000+ euro.</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -122,10 +122,10 @@
                             </th>
                             @if (isAdmin)
                             {
-                                    <th>
-                                        <i class="bi bi-person-badge"></i>
-                                        Tenant
-                                    </th>
+                                        <th>
+                                            <i class="bi bi-person-badge"></i>
+                                            Tenant
+                                        </th>
                             }
                             <th>
                                 <i class="bi bi-gear"></i> 
@@ -136,16 +136,16 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
-                                <tr class="@(!item.Available ? "table-secondary" : "")">
-                                    <td>
-                                        <strong>@Html.DisplayFor(modelItem => item.Address)</strong>
+                                    <tr class="@(!item.Available ? "table-secondary" : "")">
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.Address)</strong>
                                     @if (item.City != null)
                                     {
-                                                <br />
-                                                <small class="text-muted">@item.City.Name</small>
+                                                        <br />
+                                                        <small class="text-muted">@item.City.Name</small>
                                     }
-                                    </td>
-                                    <td>
+                                        </td>
+                                        <td>
                                     @if (item.Description.Length > 50)
                                     {
                                         @(item.Description.Substring(0, 50) + "...")
@@ -154,100 +154,100 @@
                                     {
                                         @Html.DisplayFor(modelItem => item.Description)
                                     }
-                                    </td>
-                                    <td>
-                                        <span class="fw-bold text-success">
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-success">
                                         @item.Price_Per_Month.ToString("C")
-                                        </span>
-                                    </td>
-                                    <td>
+                                            </span>
+                                        </td>
+                                        <td>
                                     @if (item.Available)
                                     {
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle"></i> Available
-                                                </span>
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-check-circle"></i> Available
+                                                        </span>
                                     }
                                     else
                                     {
-                                                <span class="badge bg-secondary">
-                                                    <i class="bi bi-house-lock"></i> Rented
-                                                </span>
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-house-lock"></i> Rented
+                                                        </span>
                                     }
-                                    </td>
-                                    <td>
-                                        <span>@item.Owner?.First_Name @item.Owner?.Last_Name</span>
+                                        </td>
+                                        <td>
+                                            <span>@item.Owner?.First_Name @item.Owner?.Last_Name</span>
                                     @if (isAdmin)
                                     {
-                                                <br />
-                                                <small class="text-muted">@item.Owner?.Email</small>
+                                                        <br />
+                                                        <small class="text-muted">@item.Owner?.Email</small>
                                     }
-                                    </td>
+                                        </td>
                                 @if (isAdmin)
                                 {
-                                            <td>
+                                                    <td>
                                         @if (item.Tenant != null)
                                         {
-                                                        <span>@item.Tenant.First_Name @item.Tenant.Last_Name</span>
-                                                        <br />
-                                                        <small class="text-muted">@item.Tenant.Email</small>
+                                                                    <span>@item.Tenant.First_Name @item.Tenant.Last_Name</span>
+                                                                    <br />
+                                                                    <small class="text-muted">@item.Tenant.Email</small>
                                         }
                                         else
                                         {
-                                                        <span class="text-muted">No tenant</span>
+                                                                    <span class="text-muted">No tenant</span>
                                         }
-                                            </td>
+                                                    </td>
                                 }
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a asp-action="Details" asp-route-id="@item.HouseId" 
-                                               class="btn btn-sm btn-info" title="Details">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a asp-action="Details" asp-route-id="@item.HouseId" 
+                                                   class="btn btn-sm btn-info" title="Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
 
                                         @if (isOwner || isAdmin)
                                         {
-                                                    <a asp-action="Edit" asp-route-id="@item.HouseId" 
-                                                       class="btn btn-sm btn-warning" title="Edit">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
-                                                    <a asp-action="Delete" asp-route-id="@item.HouseId" 
-                                                       class="btn btn-sm btn-danger" title="Delete">
-                                                        <i class="bi bi-trash"></i>
-                                                    </a>
+                                                            <a asp-action="Edit" asp-route-id="@item.HouseId" 
+                                                               class="btn btn-sm btn-warning" title="Edit">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <a asp-action="Delete" asp-route-id="@item.HouseId" 
+                                                               class="btn btn-sm btn-danger" title="Delete">
+                                                                <i class="bi bi-trash"></i>
+                                                            </a>
                                         }
 
                                         @if (isTenant && item.Available)
                                         {
-                                                    <form asp-action="Rent" method="post" style="display:inline">
-                                                        <input type="hidden" name="id" value="@item.HouseId" />
-                                                        <button type="submit" class="btn btn-sm btn-success" title="Rent">
-                                                            <i class="bi bi-house-check"></i>
-                                                        </button>
-                                                    </form>
+                                                            <form asp-action="Rent" method="post" style="display:inline">
+                                                                <input type="hidden" name="id" value="@item.HouseId" />
+                                                                <button type="submit" class="btn btn-sm btn-success" title="Rent">
+                                                                    <i class="bi bi-house-check"></i>
+                                                                </button>
+                                                            </form>
                                         }
 
                                         @if (isTenant && !item.Available && item.TenantId == currentTenantId)
                                         {
-                                                    <form asp-action="StopRent" method="post" style="display:inline">
-                                                        <input type="hidden" name="id" value="@item.HouseId" />
-                                                        <button type="submit" class="btn btn-sm btn-warning" title="Stop Rent">
-                                                            <i class="bi bi-house-x"></i>
-                                                        </button>
-                                                    </form>
+                                                            <form asp-action="StopRent" method="post" style="display:inline">
+                                                                <input type="hidden" name="id" value="@item.HouseId" />
+                                                                <button type="submit" class="btn btn-sm btn-warning" title="Stop Rent">
+                                                                    <i class="bi bi-house-x"></i>
+                                                                </button>
+                                                            </form>
                                         }
 
                                         @if (isAdmin && !item.Available && item.TenantId != null)
                                         {
-                                                    <form asp-action="StopRent" method="post" style="display:inline">
-                                                        <input type="hidden" name="id" value="@item.HouseId" />
-                                                        <button type="submit" class="btn btn-sm btn-secondary" title="Force Stop Rent">
-                                                            <i class="bi bi-shield-exclamation"></i>
-                                                        </button>
-                                                    </form>
+                                                            <form asp-action="StopRent" method="post" style="display:inline">
+                                                                <input type="hidden" name="id" value="@item.HouseId" />
+                                                                <button type="submit" class="btn btn-sm btn-secondary" title="Force Stop Rent">
+                                                                    <i class="bi bi-shield-exclamation"></i>
+                                                                </button>
+                                                            </form>
                                         }
-                                        </div>
-                                    </td>
-                                </tr>
+                                            </div>
+                                        </td>
+                                    </tr>
                         }
                     </tbody>
                 </table>
@@ -257,77 +257,77 @@
 
     @if (!Model.Any())
     {
-            <div class="alert alert-info mt-4 text-center">
-                <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
-                <h4>No houses found</h4>
+                <div class="alert alert-info mt-4 text-center">
+                    <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+                    <h4>No houses found</h4>
             @if (isOwner || isAdmin)
             {
-                        <p>
-                            <a asp-action="Create" class="btn btn-primary mt-2">
-                                <i class="bi bi-plus-circle"></i> Create the first house
-                            </a>
-                        </p>
+                                <p>
+                                    <a asp-action="Create" class="btn btn-primary mt-2">
+                                        <i class="bi bi-plus-circle"></i> Create the first house
+                                    </a>
+                                </p>
             }
             else
             {
-                        <p class="mb-0">Check back later for available houses!</p>
+                                <p class="mb-0">Check back later for available houses!</p>
             }
-            </div>
+                </div>
     }
 </div>
 
 @section Scripts {
-        <script>
-            $(document).ready(function() {
-                // Live search by address
-                $("#searchAddress").on("keyup", function() {
-                    var value = $(this).val().toLowerCase();
-                    $("#housesTable tbody tr").filter(function() {
-                        $(this).toggle($(this).find("td:first").text().toLowerCase().indexOf(value) > -1)
+            <script>
+                $(document).ready(function() {
+                    // Live search by address
+                    $("#searchAddress").on("keyup", function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#housesTable tbody tr").filter(function() {
+                            $(this).toggle($(this).find("td:first").text().toLowerCase().indexOf(value) > -1)
+                        });
+                    });
+
+                    // Filter by status
+                    $("#filterStatus").on("change", function() {
+                        var status = $(this).val();
+                        $("#housesTable tbody tr").each(function() {
+                            var isAvailable = $(this).find(".badge").text().includes("Available");
+                            if (status === "all") {
+                                $(this).show();
+                            } else if (status === "available") {
+                                $(this).toggle(isAvailable);
+                            } else if (status === "rented") {
+                                $(this).toggle(!isAvailable);
+                            }
+                        });
+                    });
+
+                    // Filter by price
+                    $("#filterPrice").on("change", function() {
+                        var priceRange = $(this).val();
+                        $("#housesTable tbody tr").each(function() {
+                            var priceText = $(this).find(".text-success").text().replace('C', '').trim();
+                            var price = parseFloat(priceText) || 0;
+
+                            if (priceRange === "all") {
+                                $(this).show();
+                            } else if (priceRange === "0-500") {
+                                $(this).toggle(price <= 500);
+                            } else if (priceRange === "501-1000") {
+                                $(this).toggle(price > 500 && price <= 1000);
+                            } else if (priceRange === "1001+") {
+                                $(this).toggle(price > 1000);
+                            }
+                        });
+                    });
+
+                    // Clear all filters
+                    $("#clearFilters").on("click", function() {
+                        $("#searchAddress").val("");
+                        $("#filterStatus").val("all");
+                        $("#filterPrice").val("all");
+                        $("#housesTable tbody tr").show();
                     });
                 });
-
-                // Filter by status
-                $("#filterStatus").on("change", function() {
-                    var status = $(this).val();
-                    $("#housesTable tbody tr").each(function() {
-                        var isAvailable = $(this).find(".badge").text().includes("Available");
-                        if (status === "all") {
-                            $(this).show();
-                        } else if (status === "available") {
-                            $(this).toggle(isAvailable);
-                        } else if (status === "rented") {
-                            $(this).toggle(!isAvailable);
-                        }
-                    });
-                });
-
-                // Filter by price
-                $("#filterPrice").on("change", function() {
-                    var priceRange = $(this).val();
-                    $("#housesTable tbody tr").each(function() {
-                        var priceText = $(this).find(".text-success").text().replace('C', '').trim();
-                        var price = parseFloat(priceText) || 0;
-
-                        if (priceRange === "all") {
-                            $(this).show();
-                        } else if (priceRange === "0-500") {
-                            $(this).toggle(price <= 500);
-                        } else if (priceRange === "501-1000") {
-                            $(this).toggle(price > 500 && price <= 1000);
-                        } else if (priceRange === "1001+") {
-                            $(this).toggle(price > 1000);
-                        }
-                    });
-                });
-
-                // Clear all filters
-                $("#clearFilters").on("click", function() {
-                    $("#searchAddress").val("");
-                    $("#filterStatus").val("all");
-                    $("#filterPrice").val("all");
-                    $("#housesTable tbody tr").show();
-                });
-            });
-        </script>
+            </script>
 }
