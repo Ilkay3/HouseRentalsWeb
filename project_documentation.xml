@@ -1,0 +1,958 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+================================================================================
+Документация на HouseRentalsWeb Проект
+================================================================================
+Описание: ASP.NET Core MVC уеб приложение за управление на наеми на жилища
+Версия: 1.0
+Автор: Development Team
+Дата на създаване: 2024
+================================================================================
+-->
+<Documentation>
+    <!-- 
+    ========================================
+    ОБЩА ИНФОРМАЦИЯ ЗА ПРОЕКТА
+    ========================================
+    -->
+    <ProjectInfo>
+        <Name>HouseRentalsWeb</Name>
+        <Description>Уеб приложение за управление на наеми на жилищни имоти</Description>
+        <TechnologyStack>
+            <Framework>ASP.NET Core MVC</Framework>
+            <Language>C#</Language>
+            <Database>Entity Framework Core</Database>
+            <Authentication>ASP.NET Core Identity</Authentication>
+            <Frontend>HTML, CSS, JavaScript, Bootstrap</Frontend>
+        </TechnologyStack>
+        <ProjectStructure>
+            <Folder name="Controllers">Контролери за управление на логиката на приложението</Folder>
+            <Folder name="Models">Класове на базата данни и ViewModel</Folder>
+            <Folder name="Views">Razor изгледи за потребителския интерфейс</Folder>
+            <Folder name="Data">Database Context и конфигурация на базата данни</Folder>
+            <Folder name="Migrations">Entity Framework миграции за базата данни</Folder>
+            <Folder name="Areas">Identity Area за автентикация и авторизация</Folder>
+        </ProjectStructure>
+    </ProjectInfo>
+
+    <!-- 
+    ========================================
+    БАЗА ДАННИ - ТАБЛИЦИ
+    ========================================
+    -->
+    <DatabaseSchema>
+        <!-- 
+        ================================
+        ТАБЛИЦА: Houses
+        ================================
+        Описание: Съхранява информация за жилищните имоти
+        Основна таблица в системата за наеми
+        -->
+        <Table name="Houses">
+            <Description>
+                Основна таблица за съхраняване на жилищни имоти.
+                Всяка къща е свързана със собственик, наемател (ако има),
+                град и удобства.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>HouseId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="HouseId" type="INT">
+                    <Description>Уникален идентификатор на къщата</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="Address" type="VARCHAR(50)">
+                    <Description>Адрес на жилището</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="Description" type="VARCHAR(500)">
+                    <Description>Подробно описание на имота</Description>
+                    <Constraints>NOT NULL, MAX 500 символа</Constraints>
+                </Column>
+                
+                <Column name="Price_Per_Month" type="DOUBLE">
+                    <Description>Месечна наемна цена</Description>
+                    <Constraints>NOT NULL, BETWEEN 0 AND 100000</Constraints>
+                </Column>
+                
+                <Column name="Available" type="BOOLEAN">
+                    <Description>Дали имотът е наличен за наемане</Description>
+                    <DefaultValue>TRUE</DefaultValue>
+                </Column>
+                
+                <Column name="OwnerId" type="INT">
+                    <Description>Идентификатор на собственика</Description>
+                    <Constraints>FOREIGN KEY -> Owners(OwnerId), NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="TenantId" type="INT">
+                    <Description>Идентификатор на текущия наемател</Description>
+                    <Constraints>FOREIGN KEY -> Tenants(TenantId), NULLABLE</Constraints>
+                </Column>
+                
+                <Column name="CityId" type="INT">
+                    <Description>Идентификатор на града</Description>
+                    <Constraints>FOREIGN KEY -> Cities(CityId), NULLABLE</Constraints>
+                </Column>
+                
+                <Column name="CreatedAt" type="DATETIME">
+                    <Description>Дата на създаване на записа</Description>
+                    <DefaultValue>CURRENT_TIMESTAMP</DefaultValue>
+                </Column>
+                
+                <Column name="UpdatedAt" type="DATETIME">
+                    <Description>Дата на последна промяна</Description>
+                    <Constraints>NULLABLE</Constraints>
+                </Column>
+            </Columns>
+            
+            <!-- 
+            ========================================
+            ВРЪЗКИ (RELATIONSHIPS)
+            ========================================
+            -->
+            <Relationships>
+                <Relationship type="Many-to-One" foreignTable="Owners">
+                    <Description>Всяка къща принадлежи на един собственик</Description>
+                    <ForeignKey>OwnerId</ForeignKey>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="Tenants">
+                    <Description>Всяка къща може да има един наемател</Description>
+                    <ForeignKey>TenantId</ForeignKey>
+                    <Note>Nullable - къщата може да няма наемател</Note>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="Cities">
+                    <Description>Всяка къща се намира в един град</Description>
+                    <ForeignKey>CityId</ForeignKey>
+                </Relationship>
+                
+                <Relationship type="Many-to-Many" foreignTable="Amenities" junctionTable="HouseAmenities">
+                    <Description>Всяка къща може да има множество удобства</Description>
+                </Relationship>
+                
+                <Relationship type="One-to-Many" foreignTable="Rentals">
+                    <Description>Всяка къща може да има множество наеми</Description>
+                </Relationship>
+            </Relationships>
+            
+            <!-- 
+            ========================================
+            ИЗЧИСЛИМИ ПРОПЪРТИ (COMPUTED PROPERTIES)
+            ========================================
+            -->
+            <ComputedProperties>
+                <Property name="FullAddress" type="String">
+                    <Description>Пълен адрес с град (ако има)</Description>
+                    <Formula>Address + ", " + City.Name</Formula>
+                    <Attribute>NotMapped</Attribute>
+                </Property>
+            </ComputedProperties>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: Owners
+        ================================
+        Описание: Съхранява информация за собствениците на имоти
+        -->
+        <Table name="Owners">
+            <Description>
+                Таблица за съхраняване на данните на собствениците на жилищни имоти.
+                Всеки собственик е свързан с ASP.NET Identity потребител.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>OwnerId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="OwnerId" type="INT">
+                    <Description>Уникален идентификатор на собственика</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="First_Name" type="VARCHAR(50)">
+                    <Description>Име на собственика</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="Last_Name" type="VARCHAR(50)">
+                    <Description>Фамилия на собственика</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="EGN" type="VARCHAR(10)">
+                    <Description>ЕГН (Единен граждански номер)</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="PhoneNumber" type="VARCHAR(50)">
+                    <Description>Телефонен номер за връзка</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="Email" type="VARCHAR(50)">
+                    <Description>Имейл адрес</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="ApplicationUserId" type="NVARCHAR(450)">
+                    <Description>Идентификатор на ASP.NET Identity потребител</Description>
+                    <Constraints>FOREIGN KEY -> AspNetUsers(Id), NOT NULL</Constraints>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="One-to-Many" foreignTable="Houses">
+                    <Description>Всеки собственик може да притежава множество къщи</Description>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="AspNetUsers">
+                    <Description>Свързан с ASP.NET Identity потребител за автентикация</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: Tenants
+        ================================
+        Описание: Съхранява информация за наемателите на имоти
+        -->
+        <Table name="Tenants">
+            <Description>
+                Таблица за съхраняване на данните на наемателите.
+                Всеки наемател е свързан с ASP.NET Identity потребител.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>TenantId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="TenantId" type="INT">
+                    <Description>Уникален идентификатор на наемателя</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="First_Name" type="VARCHAR(50)">
+                    <Description>Име на наемателя</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="Last_Name" type="VARCHAR(50)">
+                    <Description>Фамилия на наемателя</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="EGN" type="VARCHAR(10)">
+                    <Description>ЕГН (Единен граждански номер)</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="PhoneNumber" type="VARCHAR(50)">
+                    <Description>Телефонен номер за връзка</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="Email" type="VARCHAR(50)">
+                    <Description>Имейл адрес</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="ApplicationUserId" type="NVARCHAR(450)">
+                    <Description>Идентификатор на ASP.NET Identity потребител</Description>
+                    <Constraints>FOREIGN KEY -> AspNetUsers(Id), NOT NULL</Constraints>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="One-to-Many" foreignTable="Rentals">
+                    <Description>Всеки наемател може да има множество наеми</Description>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="AspNetUsers">
+                    <Description>Свързан с ASP.NET Identity потребител за автентикация</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: Rentals
+        ================================
+        Описание: Съхранява информация за наемните договори
+        -->
+        <Table name="Rentals">
+            <Description>
+                Таблица за съхраняване на наемни договори.
+                Всеки запис представлява наем на къща от наемател.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>RentalId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="RentalId" type="INT">
+                    <Description>Уникален идентификатор на наема</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="HouseId" type="INT">
+                    <Description>Идентификатор на наеманата къща</Description>
+                    <Constraints>FOREIGN KEY -> Houses(HouseId), NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="TenantId" type="INT">
+                    <Description>Идентификатор на наемателя</Description>
+                    <Constraints>FOREIGN KEY -> Tenants(TenantId), NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="RentDate" type="DATETIME">
+                    <Description>Дата на започване на наема</Description>
+                    <Constraints>NOT NULL</Constraints>
+                    <DefaultValue>CURRENT_TIMESTAMP</DefaultValue>
+                </Column>
+                
+                <Column name="ReleaseDate" type="DATETIME">
+                    <Description>Дата на освобождаване на имота</Description>
+                    <Constraints>NULLABLE</Constraints>
+                </Column>
+                
+                <Column name="PriceAtRent" type="DOUBLE">
+                    <Description>Цена по време на наемане (фиксирана)</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+                
+                <Column name="IsActive" type="BOOLEAN">
+                    <Description>Дали наемът е активен</Description>
+                    <DefaultValue>TRUE</DefaultValue>
+                </Column>
+                
+                <Column name="Notes" type="VARCHAR(500)">
+                    <Description>Допълнителни бележки за наема</Description>
+                    <Constraints>NULLABLE</Constraints>
+                </Column>
+                
+                <Column name="TotalAmount" type="DOUBLE">
+                    <Description>Обща сума за целия период</Description>
+                    <Constraints>NULLABLE</Constraints>
+                </Column>
+                
+                <Column name="IsPaid" type="BOOLEAN">
+                    <Description>Дали е платено</Description>
+                    <DefaultValue>FALSE</DefaultValue>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="Many-to-One" foreignTable="Houses">
+                    <Description>Всеки наем е за една къща</Description>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="Tenants">
+                    <Description>Всеки наем е от един наемател</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: Cities
+        ================================
+        Описание: Съхранява информация за градовете
+        -->
+        <Table name="Cities">
+            <Description>
+                Справъчна таблица за градовете, където се намират имотите.
+                Позволява лесно търсене и групиране по локация.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>CityId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="CityId" type="INT">
+                    <Description>Уникален идентификатор на града</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="Name" type="VARCHAR(50)">
+                    <Description>Име на града</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="One-to-Many" foreignTable="Houses">
+                    <Description>Всеки град може да има множество къщи</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: Amenities
+        ================================
+        Описание: Съхранява информация за удобствата на имотите
+        -->
+        <Table name="Amenities">
+            <Description>
+                Справъчна таблица за удобствата, които може да имат имотите.
+                Например: Wi-Fi, Паркинг, Климатик, Телефон и др.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>AmenityId</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="amenity_id" type="INT">
+                    <Description>Уникален идентификатор на удобството</Description>
+                    <Constraints>PRIMARY KEY, AUTO_INCREMENT</Constraints>
+                </Column>
+                
+                <Column name="name" type="VARCHAR">
+                    <Description>Име на удобството</Description>
+                    <Constraints>NOT NULL</Constraints>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="Many-to-Many" foreignTable="Houses" junctionTable="HouseAmenities">
+                    <Description>Всяко удобство може да е свързано с множество къщи</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: HouseAmenities (СЪЕДИНИТЕЛНА ТАБЛИЦА)
+        ================================
+        Описание: Many-to-Many връзка между къщи и удобства
+        -->
+        <Table name="HouseAmenities">
+            <Description>
+                Съединителна таблица за реализиране на many-to-many
+                връзка между Houses и Amenities.
+                Позволява на една къща да има множество удобства и
+                на едно удобство да е налично в множество къщи.
+            </Description>
+            
+            <PrimaryKey>
+                <CompositeKey>
+                    <Column>HouseId</Column>
+                    <Column>AmenityId</Column>
+                </CompositeKey>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="HouseId" type="INT">
+                    <Description>Идентификатор на къщата</Description>
+                    <Constraints>
+                        FOREIGN KEY -> Houses(HouseId), 
+                        NOT NULL,
+                        PRIMARY KEY PART
+                    </Constraints>
+                </Column>
+                
+                <Column name="AmenityId" type="INT">
+                    <Description>Идентификатор на удобството</Description>
+                    <Constraints>
+                        FOREIGN KEY -> Amenities(amenity_id), 
+                        NOT NULL,
+                        PRIMARY KEY PART
+                    </Constraints>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="Many-to-One" foreignTable="Houses">
+                    <Description>Свързва удобството с конкретна къща</Description>
+                </Relationship>
+                
+                <Relationship type="Many-to-One" foreignTable="Amenities">
+                    <Description>Свързва къщата с конкретно удобство</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+
+        <!-- 
+        ================================
+        ТАБЛИЦА: AspNetUsers (Identity)
+        ================================
+        Описание: ASP.NET Core Identity таблица за потребители
+        -->
+        <Table name="AspNetUsers">
+            <Description>
+                Стандартна ASP.NET Core Identity таблица за управление
+                на потребителски акаунти за автентикация и авторизация.
+                Части е на Identity системата на ASP.NET Core.
+            </Description>
+            
+            <PrimaryKey>
+                <Column>Id</Column>
+            </PrimaryKey>
+            
+            <Columns>
+                <Column name="Id" type="NVARCHAR(450)">
+                    <Description>Уникален идентификатор на потребителя</Description>
+                    <Constraints>PRIMARY KEY</Constraints>
+                </Column>
+                
+                <Column name="UserName" type="NVARCHAR(256)">
+                    <Description>Потребителско име</Description>
+                    <Constraints>UNIQUE</Constraints>
+                </Column>
+                
+                <Column name="NormalizedUserName" type="NVARCHAR(256)">
+                    <Description>Нормализирано потребителско име</Description>
+                    <Constraints>UNIQUE</Constraints>
+                </Column>
+                
+                <Column name="Email" type="NVARCHAR(256)">
+                    <Description>Имейл адрес</Description>
+                    <Constraints>UNIQUE</Constraints>
+                </Column>
+                
+                <Column name="NormalizedEmail" type="NVARCHAR(256)">
+                    <Description>Нормализиран имейл адрес</Description>
+                </Column>
+                
+                <Column name="EmailConfirmed" type="BIT">
+                    <Description>Дали имейлът е потвърден</Description>
+                </Column>
+                
+                <Column name="PasswordHash" type="NVARCHAR(MAX)">
+                    <Description>Хеширана парола</Description>
+                </Column>
+                
+                <Column name="SecurityStamp" type="NVARCHAR(MAX)">
+                    <Description>Сигурностен отпечатък</Description>
+                </Column>
+                
+                <Column name="ConcurrencyStamp" type="NVARCHAR(MAX)">
+                    <Description>Отпечатък за конкурентност</Description>
+                </Column>
+                
+                <Column name="PhoneNumber" type="NVARCHAR(MAX)">
+                    <Description>Телефонен номер</Description>
+                </Column>
+                
+                <Column name="PhoneNumberConfirmed" type="BIT">
+                    <Description>Дали телефонният номер е потвърден</Description>
+                </Column>
+                
+                <Column name="TwoFactorEnabled" type="BIT">
+                    <Description>Дали е включена двуфакторна автентикация</Description>
+                </Column>
+                
+                <Column name="LockoutEnd" type="DATETIMEOFFSET">
+                    <Description>Край на заключването</Description>
+                </Column>
+                
+                <Column name="LockoutEnabled" type="BIT">
+                    <Description>Дали заключването е включено</Description>
+                </Column>
+                
+                <Column name="AccessFailedCount" type="INT">
+                    <Description>Брой неуспешни опити за влизане</Description>
+                </Column>
+            </Columns>
+            
+            <Relationships>
+                <Relationship type="One-to-Many" foreignTable="Owners">
+                    <Description>Потребител може да бъде собственик</Description>
+                </Relationship>
+                
+                <Relationship type="One-to-Many" foreignTable="Tenants">
+                    <Description>Потребител може да бъде наемател</Description>
+                </Relationship>
+            </Relationships>
+        </Table>
+    </DatabaseSchema>
+
+    <!-- 
+    ========================================
+    КОНТРОЛЕРИ
+    ========================================
+    -->
+    <Controllers>
+        <!-- 
+        ================================
+        КОНТРОЛЕР: HomeController
+        ================================
+        -->
+        <Controller name="HomeController" path="/Home">
+            <Description>
+                Основен контролер за управление на началната страница
+                и основната функционалност на приложението.
+            </Description>
+            <Actions>
+                <Action name="Index" method="GET" path="/">
+                    <Description>Начална страница на приложението</Description>
+                </Action>
+                <Action name="Privacy" method="GET" path="/Home/Privacy">
+                    <Description>Страница с политика за поверителност</Description>
+                </Action>
+                <Action name="Error" method="GET" path="/Home/Error">
+                    <Description>Страница за грешки</Description>
+                </Action>
+            </Actions>
+        </Controller>
+
+        <!-- 
+        ================================
+        КОНТРОЛЕР: HousesController
+        ================================
+        -->
+        <Controller name="HousesController" path="/Houses">
+            <Description>
+                Контролер за управление на всички CRUD операции
+                за жилищни имоти.
+            </Description>
+            <Actions>
+                <Action name="Index" method="GET" path="/Houses">
+                    <Description>Списък с всички жилища</Description>
+                </Action>
+                <Action name="Details" method="GET" path="/Houses/Details/{id}">
+                    <Description>Детайли за конкретно жилище</Description>
+                    <Parameters>
+                        <Parameter name="id" type="int" required="true">
+                            <Description>Идентификатор на къщата</Description>
+                        </Parameter>
+                    </Parameters>
+                </Action>
+                <Action name="Create" method="GET" path="/Houses/Create">
+                    <Description>Форма за създаване на ново жилище</Description>
+                </Action>
+                <Action name="Create" method="POST" path="/Houses/Create">
+                    <Description>Записване на ново жилище</Description>
+                </Action>
+                <Action name="Edit" method="GET" path="/Houses/Edit/{id}">
+                    <Description>Форма за редактиране на жилище</Description>
+                </Action>
+                <Action name="Edit" method="POST" path="/Houses/Edit/{id}">
+                    <Description>Записване на промените</Description>
+                </Action>
+                <Action name="Delete" method="GET" path="/Houses/Delete/{id}">
+                    <Description>Форма за изтриване на жилище</Description>
+                </Action>
+                <Action name="Delete" method="POST" path="/Houses/Delete/{id}">
+                    <Description>Потвърждаване на изтриване</Description>
+                </Action>
+            </Actions>
+        </Controller>
+    </Controllers>
+
+    <!-- 
+    ========================================
+    DATA CONTEXT
+    ========================================
+    -->
+    <DatabaseContext>
+        <Name>HouseRentalsDbContext</Name>
+        <Description>
+            Entity Framework Core Database Context.
+            Основен клас за взаимодействие с базата данни.
+            Съдържа всички DbSet свойства и конфигурация на връзките.
+        </Description>
+        
+        <DbSets>
+            <DbSet name="Houses" model="House">
+                <Description>Достъп до Houses таблицата</Description>
+            </DbSet>
+            <DbSet name="Owners" model="Owner">
+                <Description>Достъп до Owners таблицата</Description>
+            </DbSet>
+            <DbSet name="Tenants" model="Tenant">
+                <Description>Достъп до Tenants таблицата</Description>
+            </DbSet>
+            <DbSet name="Rentals" model="Rental">
+                <Description>Достъп до Rentals таблицата</Description>
+            </DbSet>
+            <DbSet name="Cities" model="City">
+                <Description>Достъп до Cities таблицата</Description>
+            </DbSet>
+            <DbSet name="Amenities" model="Amenity">
+                <Description>Достъп до Amenities таблицата</Description>
+            </DbSet>
+            <DbSet name="HouseAmenities" model="HouseAmenities">
+                <Description>Достъп до HouseAmenities съединителна таблица</Description>
+            </DbSet>
+        </DbSets>
+        
+        <Inheritance>
+            <Base>DbContext</Base>
+            <Namespace>Microsoft.EntityFrameworkCore</Namespace>
+        </Inheritance>
+    </DatabaseContext>
+
+    <!-- 
+    ========================================
+    МЕТОДИ ЗА БАЗАТА ДАННИ
+    ========================================
+    -->
+    <DatabaseMethods>
+        <Category name="Създаване (Create)">
+            <Method name="AddAsync" returns="Task">
+                <Description>Добавяне на нов запис асинхронно</Description>
+                <Parameters>
+                    <Parameter name="entity" type="TEntity">Обект за добавяне</Parameter>
+                </Parameters>
+            </Method>
+            <Method name="SaveChangesAsync" returns="Task&lt;int&gt;">
+                <Description>Запазване на промените в базата данни</Description>
+            </Method>
+        </Category>
+        
+        <Category name="Четене (Read)">
+            <Method name="ToListAsync" returns="Task&lt;List&lt;T&gt;&gt;">
+                <Description>Получаване на списък с всички записи</Description>
+            </Method>
+            <Method name="FirstOrDefaultAsync" returns="Task&lt;T&gt;">
+                <Description>Получаване на първия запис или null</Description>
+            </Method>
+            <Method name="FindAsync" returns="Task&lt;T&gt;">
+                <Description>Търсене по първичен ключ</Description>
+                <Parameters>
+                    <Parameter name="keyValues" type="object[]">Стойности на ключа</Parameter>
+                </Parameters>
+            </Method>
+            <Method name="Include" returns="IQueryable&lt;T&gt;">
+                <Description>Зареждане на свързани обекти (Eager Loading)</Description>
+                <Parameters>
+                    <Parameter name="navigationProperty" type="Expression">Навигационно свойство</Parameter>
+                </Parameters>
+            </Method>
+        </Category>
+        
+        <Category name="Обновяване (Update)">
+            <Method name="Update" returns="void">
+                <Description>Маркиране на обект за обновяване</Description>
+                <Parameters>
+                    <Parameter name="entity" type="TEntity">Обект за обновяване</Parameter>
+                </Parameters>
+            </Method>
+        </Category>
+        
+        <Category name="Изтриване (Delete)">
+            <Method name="Remove" returns="void">
+                <Description>Маркиране на обект за изтриване</Description>
+                <Parameters>
+                    <Parameter name="entity" type="TEntity">Обект за изтриване</Parameter>
+                </Parameters>
+            </Method>
+        </Category>
+    </DatabaseMethods>
+
+    <!-- 
+    ========================================
+    МИГРАЦИИ (MIGRATIONS)
+    ========================================
+    -->
+    <Migrations>
+        <Migration name="20260212150512_1" date="2026-02-12 15:05:12">
+            <Description>Първоначална миграция - създаване на базовата структура</Description>
+            <Changes>
+                <Change type="CreateTable" table="AspNetUsers"/>
+                <Change type="CreateTable" table="AspNetRoles"/>
+                <Change type="CreateTable" table="AspNetUserRoles"/>
+                <Change type="CreateTable" table="Owners"/>
+                <Change type="CreateTable" table="Tenants"/>
+                <Change type="CreateTable" table="Houses"/>
+            </Changes>
+        </Migration>
+        
+        <Migration name="20260213173406_2" date="2026-02-13 17:34:06">
+            <Description>Добавяне на Rentals и City таблиците</Description>
+            <Changes>
+                <Change type="CreateTable" table="Rentals"/>
+                <Change type="CreateTable" table="Cities"/>
+                <Change type="AddColumn" table="Houses" column="CityId"/>
+            </Changes>
+        </Migration>
+        
+        <Migration name="20260213193025_3" date="2026-02-13 19:30:25">
+            <Description>Добавяне на Amenity система (Amenities, HouseAmenities)</Description>
+            <Changes>
+                <Change type="CreateTable" table="Amenities"/>
+                <Change type="CreateTable" table="HouseAmenities"/>
+            </Changes>
+        </Migration>
+    </Migrations>
+
+    <!-- 
+    ========================================
+    ИЗГЛЕДИ (VIEWS)
+    ========================================
+    -->
+    <Views>
+        <View name="_Layout" path="Views/Shared/_Layout.cshtml">
+            <Description>Основен layout шаблон за всички страници</Description>
+            <Includes>
+                <Include type="CSS">Bootstrap 5</Include>
+                <Include type="JS">jQuery, Bootstrap Bundle</Include>
+                <Include type="Custom">site.css</Include>
+            </Includes>
+        </View>
+        
+        <View name="Index" path="Views/Home/Index.cshtml">
+            <Description>Начална страница на приложението</Description>
+        </View>
+        
+        <View name="Index" path="Views/Houses/Index.cshtml">
+            <Description>Списък с всички жилища</Description>
+        </View>
+        
+        <View name="Details" path="Views/Houses/Details.cshtml">
+            <Description>Детайлна страница за жилище</Description>
+        </View>
+        
+        <View name="Create" path="Views/Houses/Create.cshtml">
+            <Description>Форма за създаване на ново жилище</Description>
+        </View>
+        
+        <View name="Edit" path="Views/Houses/Edit.cshtml">
+            <Description>Форма за редактиране на жилище</Description>
+        </View>
+        
+        <View name="Delete" path="Views/Houses/Delete.cshtml">
+            <Description>Форма за потвърждение на изтриване</Description>
+        </View>
+    </Views>
+
+    <!-- 
+    ========================================
+    КОНФИГУРАЦИЯ (CONFIGURATION)
+    ========================================
+    -->
+    <Configuration>
+        <File name="appsettings.json">
+            <Section name="ConnectionStrings">
+                <Setting name="DefaultConnection">
+                    <Description>Connection string за базата данни</Description>
+                    <Format>Server=.;Database=HouseRentals;Trusted_Connection=True;TrustServerCertificate=True;</Format>
+                </Setting>
+            </Section>
+            <Section name="Logging">
+                <Setting name="LogLevel" value="Information">
+                    <Description>Ниво на логване</Description>
+                </Setting>
+            </Section>
+        </File>
+        
+        <File name="Program.cs">
+            <Description>
+                Main entry point на приложението.
+                Конфигурира Dependency Injection, Middleware и услугите.
+            </Description>
+            <Services>
+                <Service name="DbContext" type="HouseRentalsDbContext">
+                    <Description>Database Context регистрация</Description>
+                </Service>
+                <Service name="Identity" type="Identity">
+                    <Description>ASP.NET Core Identity услуги</Description>
+                </Service>
+            </Services>
+        </File>
+    </Configuration>
+
+    <!-- 
+    ========================================
+    AUTHENTICATION & AUTHORIZATION
+    ========================================
+    -->
+    <Security>
+        <Authentication>
+            <Type>ASP.NET Core Identity</Type>
+            <Provider>Cookie Authentication</Provider>
+            <Features>
+                <Feature>Регистрация на нови потребители</Feature>
+                <Feature>Влизане в системата</Feature>
+                <Feature>Излизане от системата</Feature>
+                <Feature>Управление на пароли</Feature>
+                <Feature>Email потвърждение</Feature>
+            </Features>
+        </Authentication>
+        
+        <Authorization>
+            <Roles>
+                <Role name="Admin">Администратор на системата</Role>
+                <Role name="Owner">Собственик на имоти</Role>
+                <Role name="Tenant">Наемател</Role>
+            </Roles>
+        </Authorization>
+        
+        <UserTypes>
+            <Type name="ApplicationUser">Базов потребителски тип</Type>
+            <Type name="Owner">Разширен потребител - собственик</Type>
+            <Type name="Tenant">Разширен потребител - наемател</Type>
+        </UserTypes>
+    </Security>
+
+    <!-- 
+    ========================================
+    API ENDPOINTS (ако има)
+    ========================================
+    -->
+    <API>
+        <Note>
+            Този проект в момента използва MVC патерн с Razor Views,
+            не RESTful API. Може да се разшири с Web API в бъдеще.
+        </Note>
+        
+        <PotentialEndpoints>
+            <Endpoint method="GET" path="/api/houses">
+                <Description>Списък с всички жилища (бъдещо развитие)</Description>
+            </Endpoint>
+            <Endpoint method="POST" path="/api/houses">
+                <Description>Създаване на ново жилище (бъдещо развитие)</Description>
+            </Endpoint>
+            <Endpoint method="GET" path="/api/houses/{id}">
+                <Description>Детайли за жилище (бъдещо развитие)</Description>
+            </Endpoint>
+        </PotentialEndpoints>
+    </API>
+
+    <!-- 
+    ========================================
+    ПЪТЯ ЗА РАЗВИТИЕ
+    ========================================
+    -->
+    <Roadmap>
+        <Phase name="Phase 1: Core Functionality" status="Completed">
+            <Task>CRUD операции за Houses</Task>
+            <Task>Аутентикация с Identity</Task>
+            <Task>Основна навигация и layout</Task>
+        </Phase>
+        
+        <Phase name="Phase 2: Enhanced Features" status="In Progress">
+            <Task>Качиране на снимки за имотите</Task>
+            <Task>Търсене и филтриране</Task>
+            <Task>Rating система</Task>
+        </Phase>
+        
+        <Phase name="Phase 3: Advanced" status="Planned">
+            <Task>RESTful API</Task>
+            <Task>Мобилно приложение</Task>
+            <Task>Интеграция с платежни системи</Task>
+            <Task>Email известия</Task>
+        </Phase>
+    </Roadmap>
+
+    <!-- 
+    ========================================
+    КРАЙ НА ДОКУМЕНТАЦИЯТА
+    ========================================
+    -->
+</Documentation>

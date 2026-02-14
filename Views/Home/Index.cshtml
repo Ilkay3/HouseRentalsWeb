@@ -52,7 +52,6 @@
         </div>
     </div>
 
-    <!-- ТРИТЕ БУТОНА ЦЕНТРИРАНИ -->
     <div class="row justify-content-center g-2 mb-3">
         <div class="col-4">
             <div class="card text-center h-100">
@@ -80,7 +79,6 @@
         </div>
     </div>
 
-    <!-- Ролево-специфични секции -->
     @if (isSignedIn)
     {
         @if (isAdmin)
@@ -126,7 +124,7 @@
                         </div>
                         <div class="col-6">
                             <div class="card h-100">
-                                <div class="card-header bg-success text-white py-2">
+                                        <div class="card-header bg-primary text-white py-2">
                                     <small><i class="bi bi-graph-up"></i> Моята статистика</small>
                                 </div>
                                 <div class="card-body p-2">
@@ -170,7 +168,6 @@
     }
     else
     {
-            <!-- Информация за нерегистрирани потребители -->
             <div class="row g-2 mt-2">
                 <div class="col-4">
                     <div class="card h-100">

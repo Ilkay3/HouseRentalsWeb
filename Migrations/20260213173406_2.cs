@@ -61,7 +61,8 @@ namespace HouseRentals.Migrations
                 column: "TenantId");
         }
 
-        /// <inheritdoc />
+        
+        / <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

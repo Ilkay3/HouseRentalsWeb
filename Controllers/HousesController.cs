@@ -76,14 +76,12 @@ namespace HouseRentals.Controllers
             if (tenant == null)
                 return Content("Tenant not found");
 
-            // ПРОВЕРКА: Дали наемателят вече има активен наем?
             var activeRental = tenant.Rentals?.FirstOrDefault(r => r.IsActive);
             if (activeRental != null)
             {
                 return BadRequest("Вече имате активен наем. Моля, първо освободете текущия имот.");
             }
 
-            // БИЗНЕС ЛОГИКА: Създаване на нов Rental запис
             var rental = new Rental
             {
                 HouseId = house.HouseId,
@@ -121,14 +119,12 @@ namespace HouseRentals.Controllers
             var tenant = await _context.Tenants
                 .FirstOrDefaultAsync(t => t.ApplicationUserId == userId);
 
-            // Намери активния наем за тази къща
             var activeRental = house.Rentals?
                 .FirstOrDefault(r => r.IsActive && r.TenantId == (tenant?.TenantId ?? 0));
 
             if (activeRental == null && !User.IsInRole("Administrator"))
                 return Forbid();
 
-            // АКО Е АДМИН ИЛИ СОБСТВЕНИК - може да освободи без проверка
             if (User.IsInRole("Administrator") || User.IsInRole("Owner"))
             {
                 activeRental = house.Rentals?.FirstOrDefault(r => r.IsActive);
@@ -140,18 +136,17 @@ namespace HouseRentals.Controllers
             activeRental!.ReleaseDate = DateTime.Now;
             activeRental.IsActive = false;
 
-            // 2️⃣ Изчисляваме сумата
+            // Изчисляваме сумата
             var days = (activeRental.ReleaseDate.Value - activeRental.RentDate).Days;
             if (days == 0) days = 1;
 
             double dailyPrice = activeRental.PriceAtRent / 30.0;
             activeRental.TotalAmount = days * dailyPrice;
 
-            // ⚠ НЕ освобождаваме къщата още!
 
             await _context.SaveChangesAsync();
 
-            // 3️⃣ Пренасочваме към плащане
+            // Пренасочваме към плащане
             return RedirectToAction("Pay", new { rentalId = activeRental.RentalId });
         }
 
@@ -181,7 +176,6 @@ namespace HouseRentals.Controllers
 
             rental.IsPaid = true;
 
-            // 🔓 Сега освобождаваме имота
             rental.House!.Available = true;
             rental.House.TenantId = null;
 
@@ -220,7 +214,6 @@ namespace HouseRentals.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
-            // Намираме собственика според UserId
             var owner = await _context.Owners
                 .FirstOrDefaultAsync(o => o.ApplicationUserId == userId);
 
@@ -229,7 +222,6 @@ namespace HouseRentals.Controllers
                 return NotFound("Нямате профил като собственик.");
             }
 
-            // Ако е администратор, покажи всички обяви (или направи друга логика)
             if (User.IsInRole("Administrator"))
             {
                 var allHouses = await _context.Houses
@@ -239,7 +231,6 @@ namespace HouseRentals.Controllers
                 return View("MyHouses", allHouses);
             }
 
-            // Вземаме само обявите на този собственик
             var houses = await _context.Houses
                 .Where(h => h.OwnerId == owner!.OwnerId)
                 .Include(h => h.Tenant)
@@ -313,7 +304,6 @@ namespace HouseRentals.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 🔥 Връщаме CityList ако има грешка
             ViewBag.CityList = new SelectList(await _context.Cities.ToListAsync(), "CityId", "Name", house.CityId);
 
             return View(house);

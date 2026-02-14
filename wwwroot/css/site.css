@@ -1,12 +1,12 @@
-/* ===== À” —Œ«≈Õ ƒ»«¿…Õ ===== */
+Ôªø/* ===== –õ–£–ö–°–û–ó–ï–ù –î–ò–ó–ê–ô–ù ===== */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
 
 :root {
-    --primary-color: #000000; /* ◊ËÒÚÓ ˜ÂÌÓ */
-    --primary-dark: #1A1A1A; /* œÓ˜ÚË ˜ÂÌÓ */
-    --secondary-color: #CFB53B; /* —Ú‡Ó ÁÎ‡ÚÓ */
-    --accent-color: #DAA520; /* «Î‡ÚËÒÚÓ */
-    --light-bg: #F8F8F8; /* œÓ˜ÚË ·ˇÎÓ */
+    --primary-color: #000000; /* –ß–∏—Å—Ç–æ —á–µ—Ä–Ω–æ */
+    --primary-dark: #1A1A1A; /* –ü–æ—á—Ç–∏ —á–µ—Ä–Ω–æ */
+    --secondary-color: #CFB53B; /* –°—Ç–∞—Ä–æ –∑–ª–∞—Ç–æ */
+    --accent-color: #DAA520; /* –ó–ª–∞—Ç–∏—Å—Ç–æ */
+    --light-bg: #F8F8F8; /* –ü–æ—á—Ç–∏ –±—è–ª–æ */
     --dark-text: #1A1A1A;
     --shadow: 0 15px 35px rgba(0,0,0,0.2);
     --gold-gradient: linear-gradient(135deg, #CFB53B 0%, #DAA520 100%);
@@ -25,7 +25,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     letter-spacing: -0.02em;
 }
 
-/* ===== Õ¿¬»√¿÷»ﬂ ===== */
+/* ===== –ù–ê–í–ò–ì–ê–¶–ò–Ø ===== */
 .navbar {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
     box-shadow: var(--shadow);
@@ -84,7 +84,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
         font-weight: 600;
     }
 
-/* ===== “⁄–—¿◊ ¿ ===== */
+/* ===== –¢–™–†–°–ê–ß–ö–ê ===== */
 .navbar .input-group {
     border-radius: 30px;
     overflow: hidden;
@@ -131,7 +131,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
         font-size: 1rem;
     }
 
-/* ===== ¡”“ŒÕ «¿ ƒŒ¡¿¬ﬂÕ≈ ===== */
+/* ===== –ë–£–¢–û–ù –ó–ê –î–û–ë–ê–í–Ø–ù–ï ===== */
 .nav-link.text-success {
     background: rgba(40, 167, 69, 0.15);
     border: 1px solid #28a745;
@@ -152,7 +152,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
         display: none;
     }
 
-/* ===== DROPDOWN Ã≈Õﬁ ===== */
+/* ===== DROPDOWN –ú–ï–ù–Æ ===== */
 .dropdown-menu {
     background: var(--primary-color);
     border: 1px solid var(--secondary-color);
@@ -189,7 +189,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     border-color: rgba(247, 231, 206, 0.3);
 }
 
-/* =====  ¿–“» ===== */
+/* ===== –ö–ê–†–¢–ò ===== */
 .card {
     border: none;
     border-radius: 0;
@@ -229,7 +229,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     letter-spacing: 1px;
 }
 
-/* ===== ¡”“ŒÕ» ===== */
+/* ===== –ë–£–¢–û–ù–ò ===== */
 .btn {
     border-radius: 30px;
     font-weight: 500;
@@ -264,7 +264,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
         box-shadow: 0 5px 15px rgba(247, 231, 206, 0.3);
     }
 
-/* ===== “¿¡À»÷» ===== */
+/* ===== –¢–ê–ë–õ–ò–¶–ò ===== */
 .table {
     background: white;
     box-shadow: var(--shadow);
@@ -286,7 +286,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
         background: rgba(247, 231, 206, 0.05);
     }
 
-/* ===== ‘Œ–Ã» ===== */
+/* ===== –§–û–†–ú–ò ===== */
 .form-control, .form-select {
     border-radius: 30px;
     border: 1px solid #e0d9cf;
@@ -309,7 +309,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     color: #666;
 }
 
-/* ===== ¡≈…ƒ∆Œ¬≈ ===== */
+/* ===== –ë–ï–ô–î–ñ–û–í–ï ===== */
 .badge {
     border-radius: 30px;
     font-weight: 500;
@@ -348,7 +348,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
             color: var(--accent-color);
         }
 
-/* ===== ÃŒ¡»À≈Õ »«√À≈ƒ ===== */
+/* ===== –ú–û–ë–ò–õ–ï–ù –ò–ó–ì–õ–ï–î ===== */
 @media (max-width: 991.98px) {
     .navbar form {
         width: 100% !important;
@@ -376,7 +376,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     }
 }
 
-/* ===== ¿Õ»Ã¿÷»» ===== */
+/* ===== –ê–ù–ò–ú–ê–¶–ò–ò ===== */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -393,7 +393,6 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title, .display-4 {
     animation: fadeInUp 0.6s ease-out;
 }
 
-/* ===== À” —Œ«Õ» ƒ≈“¿…À» ===== */
 .bg-primary {
     background: var(--primary-color) !important;
 }
@@ -412,13 +411,13 @@ hr {
     background: linear-gradient(90deg, transparent, var(--secondary-color), transparent);
     margin: 2rem 0;
 }
-/* ===== —“¿“»—“»◊≈— »  ¿–“» ===== */
+/* ===== –°–¢–ê–¢–ò–°–¢–ò–ß–ï–°–ö–ò –ö–ê–†–¢–ò ===== */
 .row.g-2 .col-6 .card {
     border: none !important;
     transition: all 0.3s ease;
 }
 
-    /* ¬ÒË˜ÍË Í‡ÚË ‰‡ Ò‡ ˜ÂÌË Ò˙Ò ÁÎ‡ÚËÒÚÓ */
+    /* –í—Å–∏—á–∫–∏ –∫–∞—Ä—Ç–∏ –¥–∞ —Å–∞ —á–µ—Ä–Ω–∏ —Å—ä—Å –∑–ª–∞—Ç–∏—Å—Ç–æ */
     .row.g-2 .col-6 .card.bg-primary,
     .row.g-2 .col-6 .card.bg-success,
     .row.g-2 .col-6 .card.bg-warning,
@@ -428,7 +427,7 @@ hr {
         border-bottom: 3px solid var(--secondary-color) !important;
     }
 
-    /* “ÂÍÒÚ˙Ú ‚ Í‡ÚËÚÂ */
+    /* –¢–µ–∫—Å—Ç—ä—Ç –≤ –∫–∞—Ä—Ç–∏—Ç–µ */
     .row.g-2 .col-6 .card .card-body small {
         color: rgba(255, 255, 255, 0.8) !important;
         font-size: 0.75rem;
@@ -446,13 +445,50 @@ hr {
         line-height: 1.2;
     }
 
-    /* Hover ÂÙÂÍÚ */
+    /* Hover –µ—Ñ–µ–∫—Ç */
     .row.g-2 .col-6 .card:hover {
         transform: translateY(-5px);
         box-shadow: var(--shadow);
         background: linear-gradient(135deg, var(--primary-dark) 0%, #000000 100%) !important;
+        color: white !important;
     }
 
-        .row.g-2 .col-6 .card:hover h4 {
-            color: var(--accent-color) !important;
+        .row.g-2 .col-6 .card:hover h5,
+        .row.g-2 .col-6 .card:hover .card-title,
+        .row.g-2 .col-6 .card:hover .card-text,
+        .row.g-2 .col-6 .card:hover p,
+        .row.g-2 .col-6 .card:hover .text-muted {
+            color: white !important;
         }
+
+        .row.g-2 .col-6 .card:hover .h5.text-success,
+        .row.g-2 .col-6 .card:hover .text-success {
+            color: var(--secondary-color) !important;
+        }
+
+    .row.g-2 .col-6 .card small.text-primary {
+        color: var(--dark-text) !important;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .row.g-2 .col-6 .card .small.fw-bold {
+        color: var(--dark-text) !important;
+        transition: all 0.3s ease;
+    }
+
+    .row.g-2 .col-6 .card:hover small.text-primary,
+    .row.g-2 .col-6 .card:hover .small.fw-bold {
+        color: white !important;
+    }
+
+    .row.g-2 .col-6 .card:hover .badge.bg-success {
+        background: var(--secondary-color) !important;
+        color: var(--primary-color) !important;
+    }
+
+    .row.g-2 .col-6 .card:hover .badge.bg-secondary {
+        background: rgba(255,255,255,0.2) !important;
+        color: white !important;
+    }
